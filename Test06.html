@@ -954,7 +954,6 @@ function initTouchControls() {
     btn.addEventListener("mouseup", onUp);
     btn.addEventListener("mouseleave", onUp);
   }
-}onUp);
 }
 
   function applyMusicForMode() {
@@ -1448,7 +1447,7 @@ function initTouchControls() {
 
   screenEl.addEventListener('click', () => {
     unlockAudioOnUserGesture(); 
-    screenEl.focus());
+    screenEl.focus();
   });
     
   initTouchControls();
