@@ -420,6 +420,7 @@
   if (audio.ctx && audio.ctx.state !== "running") {
     audio.ctx.resume();
   }
+  startAudio();
 }
 
   function scheduleStep(step, time) {
@@ -1421,7 +1422,7 @@ function initTouchControls() {
         unlockAudioIfNeeded();
         startGameFromTitle();
       } else {
-        unlockAudioIfNeeded();
+        startAudio();
       }
       return;
     }
