@@ -1,0 +1,1340 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Starfall Quest: ASCII Edition</title>
+  <style>
+    body {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      margin: 16px;
+    }
+
+    #screen {
+      font-size: 14px;
+      line-height: 1.1;
+      padding: 12px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      display: inline-block;
+      user-select: none;
+      outline: none;
+      background: #0b0b0b;
+    }
+
+    .row { height: 1.1em; }
+    .ch { white-space: pre; }
+
+    /* Overworld */
+    .grass { color: #5bd66a; }
+    .dirt  { color: #caa86a; }
+    .water { color: #4aa3ff; }
+    .wall  { color: #9aa0a6; }
+    .town  { color: #ffd34d; }
+
+    /* Town / interiors */
+    .floor { color: #cfcfcf; }
+    .roof  { color: #d66a6a; }
+    .door  { color: #ff8a3d; }
+    .sign  { color: #ffd34d; }
+    .altar { color: #b68cff; }
+    .counter { color: #8fd3ff; }
+
+    .npc { color: #ffffff; }
+    .player { color: #ffffff; font-weight: 700; }
+
+    /* Title screen */
+    .titleText { color: #ffffff; font-weight: 700; }
+    .titleDim  { color: #9aa0a6; }
+    .star      { color: #ffffff; }
+    .starDim   { color: #9aa0a6; }
+
+    #hud { margin-top: 10px; color: #111; max-width: 760px; }
+    kbd {
+      padding: 2px 6px;
+      border: 1px solid #bbb;
+      border-bottom-width: 2px;
+      border-radius: 6px;
+      background: #f7f7f7;
+      margin-right: 2px;
+    }
+
+    pre.dialogue {
+      margin: 10px 0 0 0;
+      padding: 10px;
+      background: #111;
+      color: #eee;
+      border-radius: 8px;
+      border: 1px solid #333;
+      white-space: pre;
+    }
+  </style>
+</head>
+<body>
+  <div id="screen" tabindex="0"></div>
+  <div id="hud"></div>
+
+<script>
+(() => {
+  const VIEW_W = 32;
+  const VIEW_H = 32;
+
+  const MAP_W = 80;
+  const MAP_H = 60;
+
+  // Movement pacing
+  const MOVE_MS = 155;
+  const NPC_MS_TOWN  = 480;
+  const NPC_MS_INTERIOR = 900;
+
+  // Overworld tiles
+  const OW_WALKABLE = new Set(['.', ',', 'T']);
+  const OW_BLOCKED  = new Set(['#', '~']);
+
+  // Town base tiles
+  const TOWN_BLOCKED  = new Set(['#']);
+  // Interior tiles
+  const IN_BLOCKED  = new Set(['#', '^', '=', '*']); // counter is blocked (interaction), altar blocked
+
+  function makeRng(seed) {
+    let s = seed >>> 0;
+    return () => {
+      s = (1664525 * s + 1013904223) >>> 0;
+      return s / 0x100000000;
+    };
+  }
+
+  function hash2(a, b) {
+    let h = 2166136261 >>> 0;
+    h ^= (a & 0xffff); h = Math.imul(h, 16777619) >>> 0;
+    h ^= (b & 0xffff); h = Math.imul(h, 16777619) >>> 0;
+    return h >>> 0;
+  }
+
+  function clamp(v, lo, hi) {
+    return v < lo ? lo : (v > hi ? hi : v);
+  }
+
+  function escapeHtml(ch) {
+    if (ch === '&') return '&amp;';
+    if (ch === '<') return '&lt;';
+    if (ch === '>') return '&gt;';
+    return ch;
+  }
+
+  // ---------------- Dialogue system ----------------
+  const dialogue = {
+    active: false,
+    lines: [],
+    idx: 0,
+    speaker: "NPC"
+  };
+
+  function loremIpsumLines(rnd, maxWidth, minLines, maxLines) {
+    const words = ("lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore " +
+      "et dolore magna aliqua ut enim ad minim veniam quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea " +
+      "commodo consequat duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla " +
+      "pariatur excepteur sint occaecat cupidatat non proident sunt in culpa qui officia deserunt mollit anim id est laborum").split(" ");
+
+    const targetLines = minLines + Math.floor(rnd() * (maxLines - minLines + 1));
+    const out = [];
+    let line = "";
+
+    // make ~ (targetLines * 10..18) words
+    const wordCount = targetLines * (10 + Math.floor(rnd() * 9));
+
+    for (let i = 0; i < wordCount; i++) {
+      const w = words[Math.floor(rnd() * words.length)];
+      const next = line.length ? (line + " " + w) : w;
+      if (next.length > maxWidth) {
+        out.push(line);
+        line = w;
+        if (out.length >= targetLines) break;
+      } else {
+        line = next;
+      }
+    }
+    if (out.length < targetLines && line.length) out.push(line);
+
+    // ensure at least minLines
+    while (out.length < minLines) out.push(words[Math.floor(rnd() * words.length)]);
+
+    return out.slice(0, maxLines);
+  }
+
+  function openDialogue(npc, rnd) {
+    dialogue.active = true;
+    dialogue.idx = 0;
+    dialogue.speaker = npc.name || "NPC";
+    // varying length per npc type
+    const w = 52;
+    let minL = 1, maxL = 4;
+    if (npc.role === "shopkeeper") { minL = 2; maxL = 5; }
+    if (npc.role === "chapel") { minL = 2; maxL = 4; }
+    if (npc.role === "home") { minL = 1; maxL = 3; }
+    dialogue.lines = loremIpsumLines(rnd, w, minL, maxL);
+    render(); // refresh HUD
+  }
+
+  function advanceDialogue() {
+    if (!dialogue.active) return;
+    dialogue.idx += 1;
+    if (dialogue.idx >= dialogue.lines.length) {
+      dialogue.active = false;
+      dialogue.lines = [];
+      dialogue.idx = 0;
+    }
+    render();
+  }
+
+  function renderDialogueBox() {
+    if (!dialogue.active) return "";
+
+    const width = 60;
+    const top = "┌" + "─".repeat(width - 2) + "┐";
+    const bot = "└" + "─".repeat(width - 2) + "┘";
+    const speaker = (dialogue.speaker || "NPC").slice(0, width - 6);
+    const titleLine = "│ " + speaker.padEnd(width - 4) + " │";
+
+    const text = dialogue.lines[dialogue.idx] ?? "";
+    const wrapped = wrapText(text, width - 4);
+
+    const bodyLines = wrapped.map(t => "│ " + t.padEnd(width - 4) + " │");
+    while (bodyLines.length < 3) bodyLines.push("│ " + " ".repeat(width - 4) + " │");
+
+    const hint = "Enter: next / close";
+    const hintLine = "│ " + hint.padEnd(width - 4) + " │";
+
+    return [
+      top,
+      titleLine,
+      ...bodyLines.slice(0, 3),
+      hintLine,
+      bot
+    ].join("\n");
+  }
+
+  function wrapText(text, w) {
+    const words = text.split(/\s+/).filter(Boolean);
+    const lines = [];
+    let line = "";
+    for (const word of words) {
+      const next = line.length ? (line + " " + word) : word;
+      if (next.length > w) {
+        if (line.length) lines.push(line);
+        line = word;
+      } else {
+        line = next;
+      }
+    }
+    if (line.length) lines.push(line);
+    return lines.length ? lines : [""];
+  }
+
+  // ---------------- Web Audio chiptune engine ----------------
+  const audio = {
+    ctx: null,
+    master: null,
+    started: false,
+    unlocked: false,
+    tempo: 120,
+    lookaheadMs: 25,
+    scheduleAheadSec: 0.12,
+    stepLenSec: 0.125,
+    nextStepTime: 0,
+    stepIndex: 0,
+    timer: null,
+    trackName: "title",
+    tracks: null,
+    melodyGain: 0.18,
+    bassGain: 0.14,
+    noiseGain: 0.08,
+  };
+
+  function noteToMidi(note) {
+    if (!note) return null;
+    const m = /^([A-G])(#?)(-?\d+)$/.exec(note);
+    if (!m) return null;
+    const base = { C:0, D:2, E:4, F:5, G:7, A:9, B:11 }[m[1]];
+    const sharp = m[2] === '#' ? 1 : 0;
+    const oct = parseInt(m[3], 10);
+    return (oct + 1) * 12 + base + sharp;
+  }
+
+  function midiToFreq(midi) {
+    return 440 * Math.pow(2, (midi - 69) / 12);
+  }
+
+  function createNoiseBuffer(ctx) {
+    const seconds = 0.15;
+    const sampleRate = ctx.sampleRate;
+    const buffer = ctx.createBuffer(1, Math.floor(sampleRate * seconds), sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1);
+    return buffer;
+  }
+
+  function ensureAudio() {
+    if (audio.ctx) return;
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const master = ctx.createGain();
+    master.gain.value = 0.55;
+    master.connect(ctx.destination);
+
+    audio.ctx = ctx;
+    audio.master = master;
+    audio.stepLenSec = (60 / audio.tempo) / 2;
+    audio.tracks = makeTracks();
+    audio.tracks.noiseBuf = createNoiseBuffer(ctx);
+  }
+
+  function unlockAudioIfNeeded() {
+    ensureAudio();
+    if (audio.unlocked) return;
+    audio.ctx.resume();
+    audio.unlocked = true;
+  }
+
+  function startAudio() {
+    unlockAudioIfNeeded();
+    if (audio.started) return;
+    audio.started = true;
+    audio.nextStepTime = audio.ctx.currentTime + 0.03;
+    audio.timer = setInterval(audioScheduler, audio.lookaheadMs);
+  }
+
+  function setTempo(bpm) {
+    audio.tempo = bpm;
+    audio.stepLenSec = (60 / audio.tempo) / 2;
+  }
+
+  // IMPORTANT CHANGE: only reset if the track changes
+  function setTrack(name) {
+    if (name === audio.trackName) return;
+    audio.trackName = name;
+    audio.stepIndex = 0;
+    if (audio.ctx) audio.nextStepTime = audio.ctx.currentTime + 0.03;
+  }
+
+  function playOsc(time, freq, dur, type, gainVal) {
+    const ctx = audio.ctx;
+    const osc = ctx.createOscillator();
+    const g = ctx.createGain();
+
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, time);
+
+    g.gain.setValueAtTime(0.0001, time);
+    g.gain.exponentialRampToValueAtTime(Math.max(0.0001, gainVal), time + 0.005);
+    g.gain.exponentialRampToValueAtTime(0.0001, time + Math.max(0.02, dur - 0.01));
+
+    osc.connect(g);
+    g.connect(audio.master);
+
+    osc.start(time);
+    osc.stop(time + dur + 0.02);
+  }
+
+  function playNoiseHit(time, dur, gainVal) {
+    const ctx = audio.ctx;
+    const src = ctx.createBufferSource();
+    src.buffer = audio.tracks.noiseBuf;
+
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, time);
+    g.gain.exponentialRampToValueAtTime(Math.max(0.0001, gainVal), time + 0.003);
+    g.gain.exponentialRampToValueAtTime(0.0001, time + Math.max(0.02, dur - 0.005));
+
+    const hp = ctx.createBiquadFilter();
+    hp.type = "highpass";
+    hp.frequency.setValueAtTime(1800, time);
+
+    src.connect(hp);
+    hp.connect(g);
+    g.connect(audio.master);
+
+    src.start(time);
+    src.stop(time + dur + 0.02);
+  }
+
+  function audioScheduler() {
+    if (!audio.started || !audio.ctx) return;
+
+    const ctxNow = audio.ctx.currentTime;
+    while (audio.nextStepTime < ctxNow + audio.scheduleAheadSec) {
+      scheduleStep(audio.stepIndex, audio.nextStepTime);
+      const tr = audio.tracks[audio.trackName];
+      audio.stepIndex = (audio.stepIndex + 1) % tr.len;
+      audio.nextStepTime += audio.stepLenSec;
+    }
+  }
+
+  function scheduleStep(step, time) {
+    const tr = audio.tracks[audio.trackName];
+
+    const bNote = tr.bass[step];
+    if (bNote) {
+      const midi = noteToMidi(bNote);
+      if (midi !== null) playOsc(time, midiToFreq(midi), audio.stepLenSec * 0.95, "triangle", audio.bassGain);
+    }
+
+    const lNote = tr.lead[step];
+    if (lNote) {
+      const midi = noteToMidi(lNote);
+      if (midi !== null) playOsc(time, midiToFreq(midi), audio.stepLenSec * 0.9, "square", audio.melodyGain);
+    }
+
+    const hNote = tr.harm[step];
+    if (hNote) {
+      const midi = noteToMidi(hNote);
+      if (midi !== null) playOsc(time, midiToFreq(midi), audio.stepLenSec * 0.9, "square", audio.melodyGain * 0.55);
+    }
+
+    const d = tr.drum[step];
+    if (d === 1) playNoiseHit(time, audio.stepLenSec * 0.25, audio.noiseGain * 0.9);
+    if (d === 2) playNoiseHit(time, audio.stepLenSec * 0.35, audio.noiseGain * 1.2);
+    if (d === 3) playNoiseHit(time, audio.stepLenSec * 0.22, audio.noiseGain * 0.75);
+  }
+
+  function makeTracks() {
+    const R = null;
+
+    const titleLen = 64;
+    const title = { len: titleLen,
+      bass: Array(titleLen).fill(R),
+      lead: Array(titleLen).fill(R),
+      harm: Array(titleLen).fill(R),
+      drum: Array(titleLen).fill(0)
+    };
+
+    const titleBassSeq = ["C2", R, "G1", R, "A#1", R, "G1", R];
+    for (let i = 0; i < titleLen; i++) title.bass[i] = titleBassSeq[i % titleBassSeq.length];
+
+    const arp1 = ["C4","D#4","G4","D#4"];
+    const arp2 = ["A#3","D4","F4","D4"];
+    for (let i = 0; i < titleLen; i++) {
+      const bar = Math.floor(i / 16);
+      const pat = (bar % 2 === 0) ? arp1 : arp2;
+      if (i % 2 === 0) title.lead[i] = pat[(i / 2) % pat.length | 0];
+    }
+
+    for (let i = 0; i < titleLen; i++) {
+      if (i % 16 === 0) title.harm[i] = (Math.floor(i / 16) % 2 === 0) ? "C3" : "A#2";
+      if (i % 16 === 8) title.harm[i] = (Math.floor(i / 16) % 2 === 0) ? "G2" : "F2";
+    }
+
+    for (let i = 0; i < titleLen; i++) {
+      if (i % 4 === 2) title.drum[i] = 3;
+      if (i % 16 === 15) title.drum[i] = 1;
+    }
+
+    const overworldLen = 64;
+    const overworld = { len: overworldLen,
+      bass: Array(overworldLen).fill(R),
+      lead: Array(overworldLen).fill(R),
+      harm: Array(overworldLen).fill(R),
+      drum: Array(overworldLen).fill(0)
+    };
+
+    const owBass = ["A1", R, "E2", R, "G1", R, "E2", R];
+    for (let i = 0; i < overworldLen; i++) overworld.bass[i] = owBass[i % owBass.length];
+
+    const owLeadA = ["E4",R,"G4",R,"A4",R,"G4",R,"E4",R,"D4",R,"C4",R,"D4",R];
+    const owLeadB = ["E4",R,"G4",R,"B4",R,"A4",R,"G4",R,"E4",R,"D4",R,"C4",R];
+    for (let i = 0; i < overworldLen; i++) {
+      const block = Math.floor(i / 16) % 4;
+      const pat = (block < 2) ? owLeadA : owLeadB;
+      overworld.lead[i] = pat[i % 16];
+    }
+
+    for (let i = 0; i < overworldLen; i++) {
+      if (i % 8 === 0) overworld.harm[i] = "C4";
+      if (i % 16 === 8) overworld.harm[i] = "B3";
+    }
+
+    for (let i = 0; i < overworldLen; i++) {
+      if (i % 2 === 1) overworld.drum[i] = 1;
+      if (i % 16 === 4 || i % 16 === 12) overworld.drum[i] = 2;
+    }
+
+    const townLen = 64;
+    const town = { len: townLen,
+      bass: Array(townLen).fill(R),
+      lead: Array(townLen).fill(R),
+      harm: Array(townLen).fill(R),
+      drum: Array(townLen).fill(0)
+    };
+
+    const tBass = ["C2",R,"G1",R,"A1",R,"F1",R];
+    for (let i = 0; i < townLen; i++) town.bass[i] = tBass[i % tBass.length];
+
+    const tLeadA = ["E4",R,"G4",R,"A4",R,"G4",R,"E4",R,"D4",R,"C4",R,"D4",R];
+    const tLeadB = ["G4",R,"A4",R,"C5",R,"B4",R,"A4",R,"G4",R,"E4",R,"D4",R];
+    for (let i = 0; i < townLen; i++) {
+      const block = Math.floor(i / 16) % 4;
+      const pat = (block < 2) ? tLeadA : tLeadB;
+      town.lead[i] = pat[i % 16];
+    }
+
+    for (let i = 0; i < townLen; i++) {
+      if (i % 16 === 0) town.harm[i] = "C4";
+      if (i % 16 === 8) town.harm[i] = "G3";
+    }
+
+    for (let i = 0; i < townLen; i++) {
+      if (i % 2 === 1) town.drum[i] = 1;
+      if (i % 16 === 6 || i % 16 === 14) town.drum[i] = 3;
+      if (i % 16 === 4 || i % 16 === 12) town.drum[i] = 2;
+    }
+
+    return { title, overworld, town, noiseBuf: null };
+  }
+
+  // ---------------- Map generation ----------------
+  function generateOverworld(w, h, seed = 42) {
+    const rnd = makeRng(seed);
+    const grid = Array.from({ length: h }, () => Array.from({ length: w }, () => '.'));
+
+    for (let i = 0; i < 8; i++) {
+      const cx = Math.floor(rnd() * w);
+      const cy = Math.floor(rnd() * h);
+      const r  = 3 + Math.floor(rnd() * 6);
+      for (let y = Math.max(0, cy - r); y <= Math.min(h - 1, cy + r); y++) {
+        for (let x = Math.max(0, cx - r); x <= Math.min(w - 1, cx + r); x++) {
+          const dx = x - cx, dy = y - cy;
+          if (dx*dx + dy*dy <= r*r && rnd() < 0.7) grid[y][x] = '~';
+        }
+      }
+    }
+
+    for (let i = 0; i < 10; i++) {
+      const cx = Math.floor(rnd() * w);
+      const cy = Math.floor(rnd() * h);
+      const r  = 4 + Math.floor(rnd() * 8);
+      for (let y = Math.max(0, cy - r); y <= Math.min(h - 1, cy + r); y++) {
+        for (let x = Math.max(0, cx - r); x <= Math.min(w - 1, cx + r); x++) {
+          const dx = x - cx, dy = y - cy;
+          if (dx*dx + dy*dy <= r*r && rnd() < 0.6) grid[y][x] = '#';
+        }
+      }
+    }
+
+    const dirs = [[1,0],[-1,0],[0,1],[0,-1]];
+    for (let p = 0; p < 4; p++) {
+      let x = Math.floor(rnd() * w);
+      let y = Math.floor(rnd() * h);
+      let [dx, dy] = dirs[Math.floor(rnd() * dirs.length)];
+      const length = 25 + Math.floor(rnd() * 35);
+      for (let step = 0; step < length; step++) {
+        if (x >= 0 && x < w && y >= 0 && y < h && grid[y][x] === '.') grid[y][x] = ',';
+        if (rnd() < 0.25) [dx, dy] = dirs[Math.floor(rnd() * dirs.length)];
+        x += dx; y += dy;
+      }
+    }
+
+    for (let t = 0; t < 4; t++) {
+      for (let tries = 0; tries < 600; tries++) {
+        const x = Math.floor(rnd() * w);
+        const y = Math.floor(rnd() * h);
+        if (grid[y][x] === '.' || grid[y][x] === ',') { grid[y][x] = 'T'; break; }
+      }
+    }
+
+    return grid;
+  }
+
+  function findSpawnOverworld(grid) {
+    for (let y = 0; y < grid.length; y++) {
+      for (let x = 0; x < grid[0].length; x++) {
+        if (OW_WALKABLE.has(grid[y][x])) return { x, y };
+      }
+    }
+    return { x: 1, y: 1 };
+  }
+
+  function makeEmptyGrid(w, h, fill='.') {
+    return Array.from({ length: h }, () => Array.from({ length: w }, () => fill));
+  }
+
+  function placeRect(grid, x0, y0, w, h, ch) {
+    for (let y = y0; y < y0 + h; y++) {
+      for (let x = x0; x < x0 + w; x++) {
+        if (y < 0 || y >= grid.length || x < 0 || x >= grid[0].length) continue;
+        grid[y][x] = ch;
+      }
+    }
+  }
+
+  function generateTownFor(overX, overY) {
+    const seed = (hash2(overX, overY) ^ 0xA5A5A5A5) >>> 0;
+    const rnd = makeRng(seed);
+
+    const w = 20 + Math.floor(rnd() * 29);
+    const h = 20 + Math.floor(rnd() * 29);
+
+    const grid = makeEmptyGrid(w, h, '.');
+
+    const midX = Math.floor(w / 2);
+    const midY = Math.floor(h / 2);
+    for (let y = 0; y < h; y++) grid[y][midX] = ',';
+    for (let x = 0; x < w; x++) grid[midY][x] = ',';
+
+    const buildings = [];
+
+    function canPlace(x0,y0,bw,bh) {
+      if (x0 < 1 || y0 < 1 || x0 + bw >= w - 1 || y0 + bh >= h - 1) return false;
+      for (const b of buildings) {
+        const sep = 2;
+        if (!(x0 + bw + sep < b.x || b.x + b.w + sep < x0 || y0 + bh + sep < b.y || b.y + b.h + sep < y0)) return false;
+      }
+      return true;
+    }
+
+    function kindLetter(kind) {
+      if (kind === 'shop') return 'S';
+      if (kind === 'chapel') return 'C';
+      return 'H';
+    }
+
+    function stampBuilding(x0, y0, bw, bh, kind) {
+      for (let y = y0; y < y0 + bh; y++) {
+        for (let x = x0; x < x0 + bw; x++) {
+          if (y === y0) grid[y][x] = '^';
+          else grid[y][x] = '#';
+        }
+      }
+
+      const letterX = x0 + Math.floor(bw / 2);
+      grid[y0][letterX] = kindLetter(kind);
+
+      const doorX = x0 + Math.floor(bw / 2);
+      const doorY = y0 + bh - 1;
+      grid[doorY][doorX] = '+';
+
+      buildings.push({ x:x0, y:y0, w:bw, h:bh, kind, doorX, doorY });
+    }
+
+    const presets = [
+      { kind:'shop', bw: 9, bh: 6 },
+      { kind:'chapel', bw: 11, bh: 7 }
+    ];
+    for (const p of presets) {
+      for (let tries = 0; tries < 400; tries++) {
+        const x0 = 2 + Math.floor(rnd() * (w - p.bw - 4));
+        const y0 = 2 + Math.floor(rnd() * (h - p.bh - 4));
+        if (canPlace(x0,y0,p.bw,p.bh)) { stampBuilding(x0,y0,p.bw,p.bh,p.kind); break; }
+      }
+    }
+
+    const homeCount = 2 + Math.floor(rnd() * 5);
+    for (let i = 0; i < homeCount; i++) {
+      const bw = 7 + Math.floor(rnd() * 5);
+      const bh = 5 + Math.floor(rnd() * 3);
+      for (let tries = 0; tries < 400; tries++) {
+        const x0 = 2 + Math.floor(rnd() * (w - bw - 4));
+        const y0 = 2 + Math.floor(rnd() * (h - bh - 4));
+        if (canPlace(x0,y0,bw,bh)) { stampBuilding(x0,y0,bw,bh,'home'); break; }
+      }
+    }
+
+    // NPCs (town walkers)
+    const npcCount = 2 + Math.floor(rnd() * 6);
+    const npcs = [];
+    for (let i = 0; i < npcCount; i++) {
+      for (let tries = 0; tries < 800; tries++) {
+        const x = Math.floor(rnd() * w);
+        const y = Math.floor(rnd() * h);
+        const ch = grid[y][x];
+        if (TOWN_BLOCKED.has(ch) || ch === '+') continue;
+        if (ch === '#') continue;
+        npcs.push({
+          x, y,
+          ch: 'n',
+          name: ["Rae","Jorn","Mila","Tess","Bram","Lio","Nina","Orr","Vex"][Math.floor(rnd()*9)],
+          role: "town",
+          moveChance: 0.85
+        });
+        break;
+      }
+    }
+
+    let spawnX = midX, spawnY = midY;
+    for (let tries = 0; tries < 500; tries++) {
+      const x = clamp(midX + (tries % 7) - 3, 0, w - 1);
+      const y = clamp(midY + (Math.floor(tries / 7) % 7) - 3, 0, h - 1);
+      if (!TOWN_BLOCKED.has(grid[y][x]) && grid[y][x] !== '#') { spawnX = x; spawnY = y; break; }
+    }
+
+    const doorToInterior = new Map();
+    for (const b of buildings) doorToInterior.set(`${b.doorX},${b.doorY}`, b.kind);
+
+    return { w, h, grid, npcs, spawnX, spawnY, doorToInterior, seed };
+  }
+
+  function generateInterior(kind, townSeed) {
+    let w = 20, h = 12;
+    if (kind === 'chapel') { w = 24; h = 14; }
+    if (kind === 'home') { w = 18; h = 10; }
+
+    const rnd = makeRng((townSeed ^ 0xC0FFEE) >>> 0);
+    const grid = makeEmptyGrid(w, h, '.');
+
+    placeRect(grid, 0, 0, w, 1, '#');
+    placeRect(grid, 0, h - 1, w, 1, '#');
+    placeRect(grid, 0, 0, 1, h, '#');
+    placeRect(grid, w - 1, 0, 1, h, '#');
+
+    const exitX = Math.floor(w / 2);
+    const exitY = h - 1;
+    grid[exitY][exitX] = '>';
+
+    // interior npcs
+    const npcs = [];
+
+    if (kind === 'shop') {
+      for (let x = 3; x < w - 3; x++) grid[3][x] = '=';
+
+      // shopkeeper behind counter at center
+      const kx = Math.floor(w/2);
+      const ky = 2;
+      npcs.push({
+        x: kx, y: ky,
+        ch: 'K',
+        name: "Shopkeeper",
+        role: "shopkeeper",
+        moveChance: 0.0
+      });
+
+      // interaction tile is counter in front of keeper (kx, ky+1) which is y=3
+      // (already '=')
+    } else if (kind === 'chapel') {
+      for (let y = 2; y < h - 3; y++) grid[y][Math.floor(w/2)] = ',';
+      const ax = Math.floor(w/2), ay = 2;
+      grid[ay][ax] = '*';
+
+      // chapel NPC: mostly idle
+      npcs.push({
+        x: clamp(ax - 3, 1, w-2),
+        y: clamp(ay + 3, 1, h-2),
+        ch: 'p',
+        name: "Acolyte",
+        role: "chapel",
+        moveChance: 0.12
+      });
+    } else {
+      // home: a little furniture-ish blocks
+      if (h > 8 && w > 14) {
+        grid[2][2] = '#'; grid[2][3] = '#';
+        grid[3][2] = '#';
+        grid[2][w-3] = '#';
+        grid[h-4][3] = '#'; grid[h-4][4] = '#'; grid[h-4][5] = '#';
+      }
+
+      // home NPC: rarely moves
+      npcs.push({
+        x: clamp(3 + Math.floor(rnd()*4), 1, w-2),
+        y: clamp(2 + Math.floor(rnd()*3), 1, h-2),
+        ch: 'h',
+        name: "Resident",
+        role: "home",
+        moveChance: 0.08
+      });
+    }
+
+    const spawnX = exitX;
+    const spawnY = h - 2;
+
+    return { w, h, grid, spawnX, spawnY, kind, npcs };
+  }
+
+  // ---------------- Rendering ----------------
+  function tileClassOverworld(ch) {
+    if (ch === '.') return 'grass';
+    if (ch === ',') return 'dirt';
+    if (ch === '~') return 'water';
+    if (ch === '#') return 'wall';
+    if (ch === 'T') return 'town';
+    return '';
+  }
+
+  function tileClassTown(ch) {
+    if (ch === '.') return 'floor';
+    if (ch === ',') return 'dirt';
+    if (ch === '#') return 'wall';
+    if (ch === '^') return 'roof';
+    if (ch === '+') return 'door';
+    if (ch === 'S' || ch === 'H' || ch === 'C') return 'sign';
+    if (ch === ' ') return 'floor';
+    return '';
+  }
+
+  function tileClassInterior(ch) {
+    if (ch === '.') return 'floor';
+    if (ch === ',') return 'dirt';
+    if (ch === '#') return 'wall';
+    if (ch === '=') return 'counter';
+    if (ch === '*') return 'altar';
+    if (ch === '>') return 'door';
+    if (ch === ' ') return 'floor';
+    return '';
+  }
+
+  function camFor(px, py, worldW, worldH) {
+    const camX = clamp(px - Math.floor(VIEW_W / 2), 0, Math.max(0, worldW - VIEW_W));
+    const camY = clamp(py - Math.floor(VIEW_H / 2), 0, Math.max(0, worldH - VIEW_H));
+    return { camX, camY };
+  }
+
+  // ---------------- Title animation ----------------
+  const titleLines = [
+    "  STARFALL  QUEST  ",
+    "  ASCII  EDITION   ",
+    "",
+    "Press ENTER to start",
+    "WASD or Arrow Keys",
+    "T to enter towns"
+  ];
+  let titleReveal = 0;
+  const titleBlockText = titleLines.join("\n");
+  const titleTotalChars = titleBlockText.length;
+
+  const bgStars = [];
+  const rndTitle = makeRng(7);
+  for (let i = 0; i < 45; i++) {
+    bgStars.push({
+      x: Math.floor(rndTitle() * VIEW_W),
+      y: Math.floor(rndTitle() * VIEW_H),
+      tw: rndTitle() < 0.5 ? 0 : 1,
+    });
+  }
+  const shootingStars = [];
+  function spawnShootingStar() {
+    const fromTop = rndTitle() < 0.5;
+    const x = fromTop ? Math.floor(rndTitle() * VIEW_W) : 0;
+    const y = fromTop ? 0 : Math.floor(rndTitle() * VIEW_H);
+    shootingStars.push({ x, y, vx: 1, vy: 1, life: 18 + Math.floor(rndTitle() * 10) });
+  }
+  let titleTick = 0;
+
+  // ---------------- Game state ----------------
+  const screenEl = document.getElementById('screen');
+  const hudEl = document.getElementById('hud');
+
+  const overworld = generateOverworld(MAP_W, MAP_H, 42);
+
+  // Modes: title | overworld | town | interior
+  let mode = "title";
+
+  let { x: px, y: py } = findSpawnOverworld(overworld);
+
+  const towns = new Map();
+  let townObj = null;
+  let townOverworldPos = null;
+
+  let interiorObj = null;
+  let interiorReturn = null;
+
+  const keysDown = new Set();
+  let lastMoveAt = 0;
+  let lastNpcAtTown = 0;
+  let lastNpcAtInterior = 0;
+
+  function applyMusicForMode() {
+    if (mode === "title") setTrack("title");
+    else if (mode === "overworld") setTrack("overworld");
+    else setTrack("town"); // town + interior share
+  }
+
+  function renderTitle() {
+    const buf = Array.from({ length: VIEW_H }, () => Array.from({ length: VIEW_W }, () => ({ ch: ' ', cls: '' })));
+
+    for (const s of bgStars) {
+      buf[s.y][s.x] = { ch: '.', cls: (s.tw === 0) ? 'starDim' : 'star' };
+    }
+    for (const st of shootingStars) {
+      if (st.x >= 0 && st.x < VIEW_W && st.y >= 0 && st.y < VIEW_H) buf[st.y][st.x] = { ch: '*', cls: 'star' };
+      const tx = st.x - 1, ty = st.y - 1;
+      if (tx >= 0 && tx < VIEW_W && ty >= 0 && ty < VIEW_H) buf[ty][tx] = { ch: '.', cls: 'starDim' };
+    }
+
+    const blockW = Math.min(24, VIEW_W);
+    const startX = Math.floor((VIEW_W - blockW) / 2);
+    const startY = Math.floor((VIEW_H - titleLines.length) / 2) - 1;
+
+    const revealed = titleBlockText.slice(0, titleReveal);
+    const full = revealed.split("\n");
+
+    for (let i = 0; i < titleLines.length; i++) {
+      const line = (full[i] ?? "");
+      const y = startY + i;
+      if (y < 0 || y >= VIEW_H) continue;
+
+      const padLeft = Math.floor((blockW - line.length) / 2);
+      for (let j = 0; j < line.length; j++) {
+        const x = startX + padLeft + j;
+        if (x < 0 || x >= VIEW_W) continue;
+        buf[y][x] = { ch: line[j], cls: (i === 0 || i === 1) ? 'titleText' : 'titleDim' };
+      }
+    }
+
+    let html = "";
+    for (let y = 0; y < VIEW_H; y++) {
+      let rowHtml = '<div class="row">';
+      for (let x = 0; x < VIEW_W; x++) {
+        const cell = buf[y][x];
+        rowHtml += `<span class="ch ${cell.cls}">${escapeHtml(cell.ch)}</span>`;
+      }
+      rowHtml += '</div>';
+      html += rowHtml;
+    }
+
+    screenEl.innerHTML = html;
+
+    const dlg = renderDialogueBox();
+    hudEl.innerHTML =
+      `Mode: <b>Title</b> | <kbd>Enter</kbd> or <kbd>Space</kbd> to start (audio begins after that).` +
+      (dlg ? `<pre class="dialogue">${escapeHtml(dlg)}</pre>` : "");
+  }
+
+  function renderOverworld() {
+    const { camX, camY } = camFor(px, py, MAP_W, MAP_H);
+    let html = "";
+
+    for (let sy = 0; sy < VIEW_H; sy++) {
+      const my = camY + sy;
+      let rowHtml = '<div class="row">';
+      for (let sx = 0; sx < VIEW_W; sx++) {
+        const mx = camX + sx;
+        let ch = overworld[my][mx];
+        let cls = tileClassOverworld(ch);
+        if (mx === px && my === py) { ch = '@'; cls = 'player'; }
+        rowHtml += `<span class="ch ${cls}">${escapeHtml(ch)}</span>`;
+      }
+      rowHtml += '</div>';
+      html += rowHtml;
+    }
+
+    screenEl.innerHTML = html;
+
+    const dlg = renderDialogueBox();
+    hudEl.innerHTML =
+      `Mode: <b>Overworld</b> | Pos: (${px},${py}) Tile: <b>${escapeHtml(overworld[py][px])}</b><br>` +
+      `Move: <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or Arrow Keys. Step on <b>T</b> to enter town.` +
+      (dlg ? `<pre class="dialogue">${escapeHtml(dlg)}</pre>` : "");
+  }
+
+  function renderTown() {
+    const { camX, camY } = camFor(px, py, townObj.w, townObj.h);
+    const npcAt = new Map();
+    for (const n of townObj.npcs) npcAt.set(`${n.x},${n.y}`, n);
+
+    let html = "";
+    for (let sy = 0; sy < VIEW_H; sy++) {
+      const my = camY + sy;
+      let rowHtml = '<div class="row">';
+      for (let sx = 0; sx < VIEW_W; sx++) {
+        const mx = camX + sx;
+        let ch = ' ';
+        let cls = 'floor';
+
+        if (my >= 0 && my < townObj.h && mx >= 0 && mx < townObj.w) {
+          ch = townObj.grid[my][mx];
+          cls = tileClassTown(ch);
+        }
+
+        const npc = npcAt.get(`${mx},${my}`);
+        if (npc) { ch = npc.ch; cls = 'npc'; }
+        if (mx === px && my === py) { ch = '@'; cls = 'player'; }
+
+        rowHtml += `<span class="ch ${cls}">${escapeHtml(ch)}</span>`;
+      }
+      rowHtml += '</div>';
+      html += rowHtml;
+    }
+
+    screenEl.innerHTML = html;
+
+    const tile = townObj.grid[py][px];
+    const dlg = renderDialogueBox();
+    hudEl.innerHTML =
+      `Mode: <b>Town</b> (${townObj.w}x${townObj.h}) | Pos: (${px},${py}) Tile: <b>${escapeHtml(tile)}</b><br>` +
+      `Roof letters: <b>S</b> shop, <b>C</b> chapel, <b>H</b> home. Doors (+) enter interiors. Walk off edge to leave town.` +
+      (dlg ? `<pre class="dialogue">${escapeHtml(dlg)}</pre>` : "");
+  }
+
+  function renderInterior() {
+    const w = interiorObj.w, h = interiorObj.h;
+    const { camX, camY } = camFor(px, py, w, h);
+
+    const npcAt = new Map();
+    for (const n of interiorObj.npcs) npcAt.set(`${n.x},${n.y}`, n);
+
+    let html = "";
+    for (let sy = 0; sy < VIEW_H; sy++) {
+      const my = camY + sy;
+      let rowHtml = '<div class="row">';
+      for (let sx = 0; sx < VIEW_W; sx++) {
+        const mx = camX + sx;
+        let ch = ' ';
+        let cls = 'floor';
+
+        if (my >= 0 && my < h && mx >= 0 && mx < w) {
+          ch = interiorObj.grid[my][mx];
+          cls = tileClassInterior(ch);
+        }
+
+        const npc = npcAt.get(`${mx},${my}`);
+        if (npc) { ch = npc.ch; cls = 'npc'; }
+
+        if (mx === px && my === py) { ch = '@'; cls = 'player'; }
+
+        rowHtml += `<span class="ch ${cls}">${escapeHtml(ch)}</span>`;
+      }
+      rowHtml += '</div>';
+      html += rowHtml;
+    }
+
+    screenEl.innerHTML = html;
+
+    const tile = interiorObj.grid[py][px];
+    const dlg = renderDialogueBox();
+    hudEl.innerHTML =
+      `Mode: <b>${interiorObj.kind}</b> | Pos: (${px},${py}) Tile: <b>${escapeHtml(tile)}</b><br>` +
+      `Step on <b>&gt;</b> to leave.` +
+      (dlg ? `<pre class="dialogue">${escapeHtml(dlg)}</pre>` : "");
+  }
+
+  function render() {
+    if (mode === "title") renderTitle();
+    else if (mode === "overworld") renderOverworld();
+    else if (mode === "town") renderTown();
+    else renderInterior();
+  }
+
+  // ---------------- Mode transitions ----------------
+  function getOrCreateTown(overX, overY) {
+    const key = `${overX},${overY}`;
+    if (!towns.has(key)) towns.set(key, generateTownFor(overX, overY));
+    return towns.get(key);
+  }
+
+  function enterTownAt(overX, overY) {
+    townObj = getOrCreateTown(overX, overY);
+    townOverworldPos = { x: overX, y: overY };
+    mode = "town";
+    px = townObj.spawnX;
+    py = townObj.spawnY;
+    applyMusicForMode();
+    render();
+  }
+
+  function exitTown(dx, dy) {
+    const ox = townOverworldPos.x + dx;
+    const oy = townOverworldPos.y + dy;
+    if (ox < 0 || ox >= MAP_W || oy < 0 || oy >= MAP_H) return false;
+    if (OW_BLOCKED.has(overworld[oy][ox])) return false;
+
+    mode = "overworld";
+    px = ox;
+    py = oy;
+    townObj = null;
+    townOverworldPos = null;
+    applyMusicForMode();
+    render();
+    return true;
+  }
+
+  function enterInterior(kind) {
+    interiorObj = generateInterior(kind, townObj.seed);
+    interiorReturn = { px, py };
+    mode = "interior";
+    px = interiorObj.spawnX;
+    py = interiorObj.spawnY;
+    applyMusicForMode();
+    render();
+  }
+
+  function exitInterior() {
+    const ret = interiorReturn;
+    interiorObj = null;
+    interiorReturn = null;
+    mode = "town";
+    px = ret.px;
+    py = ret.py;
+    applyMusicForMode();
+    render();
+  }
+
+  // ---------------- NPC interactions ----------------
+  function findNpcAt(list, x, y) {
+    for (const n of list) if (n.x === x && n.y === y) return n;
+    return null;
+  }
+
+  function isTownSolidTile(ch) {
+    return TOWN_BLOCKED.has(ch);
+  }
+
+  function isInteriorSolidTile(ch) {
+    return IN_BLOCKED.has(ch);
+  }
+
+  // Shopkeeper interaction: bump the counter tile directly in front of them
+  function maybeTriggerShopkeeperAtCounter(nx, ny) {
+    if (mode !== "interior" || interiorObj.kind !== "shop") return false;
+    const ch = interiorObj.grid[ny][nx];
+    if (ch !== '=') return false;
+
+    // if a shopkeeper is directly above this counter tile
+    const keeper = findNpcAt(interiorObj.npcs, nx, ny - 1);
+    if (keeper && keeper.role === "shopkeeper") {
+      const rnd = makeRng((Date.now() ^ 0xBEEF) >>> 0);
+      openDialogue(keeper, rnd);
+      return true;
+    }
+    return false;
+  }
+
+  function tryMove(dx, dy) {
+    if (dialogue.active) return; // paused
+
+    if (mode === "title") return;
+
+    if (mode === "overworld") {
+      const nx = px + dx, ny = py + dy;
+      if (nx < 0 || nx >= MAP_W || ny < 0 || ny >= MAP_H) return;
+      if (OW_BLOCKED.has(overworld[ny][nx])) return;
+
+      px = nx; py = ny;
+
+      if (overworld[py][px] === 'T') enterTownAt(px, py);
+      else render();
+      return;
+    }
+
+    if (mode === "town") {
+      const nx = px + dx, ny = py + dy;
+
+      // exiting town
+      if (nx < 0 || nx >= townObj.w || ny < 0 || ny >= townObj.h) {
+        const didExit = exitTown(dx, dy);
+        if (!didExit) { px = clamp(px, 0, townObj.w - 1); py = clamp(py, 0, townObj.h - 1); render(); }
+        return;
+      }
+
+      // bump NPC -> dialogue
+      const hit = findNpcAt(townObj.npcs, nx, ny);
+      if (hit) {
+        const rnd = makeRng((townObj.seed ^ Date.now()) >>> 0);
+        openDialogue(hit, rnd);
+        return;
+      }
+
+      // solid tile
+      const tile = townObj.grid[ny][nx];
+      if (isTownSolidTile(tile)) return;
+
+      px = nx; py = ny;
+
+      // door into interior
+      if (townObj.grid[py][px] === '+') {
+        const kind = townObj.doorToInterior.get(`${px},${py}`) || 'home';
+        enterInterior(kind);
+        return;
+      }
+
+      render();
+      return;
+    }
+
+    // interior
+    const nx = px + dx, ny = py + dy;
+    if (nx < 0 || nx >= interiorObj.w || ny < 0 || ny >= interiorObj.h) return;
+
+    // bump interior npc -> dialogue
+    const hit = findNpcAt(interiorObj.npcs, nx, ny);
+    if (hit) {
+      const rnd = makeRng((Date.now() ^ 0xCAFE) >>> 0);
+      openDialogue(hit, rnd);
+      return;
+    }
+
+    // shopkeeper counter interaction
+    if (maybeTriggerShopkeeperAtCounter(nx, ny)) return;
+
+    const ch = interiorObj.grid[ny][nx];
+    if (isInteriorSolidTile(ch)) return;
+
+    px = nx; py = ny;
+
+    if (interiorObj.grid[py][px] === '>') exitInterior();
+    else render();
+  }
+
+  // ---------------- NPC movement ticks ----------------
+  function tickTownNpcs() {
+    if (mode !== "town" || dialogue.active) return;
+
+    const dirs = [[1,0],[-1,0],[0,1],[0,-1],[0,0]];
+    const rnd = makeRng((townObj.seed ^ (Date.now() & 0xffff)) >>> 0);
+
+    for (const n of townObj.npcs) {
+      if (rnd() > n.moveChance) continue;
+
+      const [dx, dy] = dirs[Math.floor(rnd() * dirs.length)];
+      const nx = n.x + dx, ny = n.y + dy;
+      if (nx < 0 || nx >= townObj.w || ny < 0 || ny >= townObj.h) continue;
+      if (nx === px && ny === py) continue;
+
+      const tile = townObj.grid[ny][nx];
+      if (isTownSolidTile(tile)) continue;
+      if (tile === '+' && rnd() < 0.75) continue;
+
+      let occupied = false;
+      for (const o of townObj.npcs) if (o !== n && o.x === nx && o.y === ny) { occupied = true; break; }
+      if (occupied) continue;
+
+      n.x = nx; n.y = ny;
+    }
+  }
+
+  function tickInteriorNpcs() {
+    if (mode !== "interior" || dialogue.active) return;
+
+    const dirs = [[1,0],[-1,0],[0,1],[0,-1],[0,0]];
+    const rnd = makeRng((Date.now() ^ (interiorObj.w<<8) ^ interiorObj.h) >>> 0);
+
+    for (const n of interiorObj.npcs) {
+      if (n.role === "shopkeeper") continue; // never moves
+      if (rnd() > (n.moveChance ?? 0.1)) continue;
+
+      const [dx, dy] = dirs[Math.floor(rnd() * dirs.length)];
+      const nx = n.x + dx, ny = n.y + dy;
+      if (nx < 0 || nx >= interiorObj.w || ny < 0 || ny >= interiorObj.h) continue;
+      if (nx === px && ny === py) continue;
+
+      const tile = interiorObj.grid[ny][nx];
+      if (isInteriorSolidTile(tile)) continue;
+      if (tile === '>') continue; // don't wander onto exit
+
+      let occupied = false;
+      for (const o of interiorObj.npcs) if (o !== n && o.x === nx && o.y === ny) { occupied = true; break; }
+      if (occupied) continue;
+
+      n.x = nx; n.y = ny;
+    }
+  }
+
+  // ---------------- Title tick ----------------
+  function tickTitle() {
+    titleTick++;
+
+    if (titleReveal < titleTotalChars) {
+      const step = (titleReveal < 24) ? 3 : 2;
+      titleReveal = Math.min(titleTotalChars, titleReveal + step);
+    }
+
+    if (titleTick % 6 === 0) {
+      for (const s of bgStars) if (rndTitle() < 0.25) s.tw = 1 - s.tw;
+    }
+
+    if (shootingStars.length < 3 && rndTitle() < 0.12) spawnShootingStar();
+
+    for (let i = shootingStars.length - 1; i >= 0; i--) {
+      const st = shootingStars[i];
+      st.x += st.vx;
+      st.y += st.vy;
+      st.life -= 1;
+      const out = (st.x >= VIEW_W || st.y >= VIEW_H);
+      if (st.life <= 0 || out) shootingStars.splice(i, 1);
+    }
+  }
+
+  // ---------------- Main loop ----------------
+  function mainLoop(now) {
+    if (mode === "title") {
+      tickTitle();
+      renderTitle();
+    } else {
+      if (!dialogue.active) {
+        if (keysDown.size > 0 && (now - lastMoveAt) >= MOVE_MS) {
+          const wantUp = keysDown.has('ArrowUp') || keysDown.has('w');
+          const wantDown = keysDown.has('ArrowDown') || keysDown.has('s');
+          const wantLeft = keysDown.has('ArrowLeft') || keysDown.has('a');
+          const wantRight = keysDown.has('ArrowRight') || keysDown.has('d');
+
+          if (wantUp) { tryMove(0, -1); lastMoveAt = now; }
+          else if (wantDown) { tryMove(0, 1); lastMoveAt = now; }
+          else if (wantLeft) { tryMove(-1, 0); lastMoveAt = now; }
+          else if (wantRight) { tryMove(1, 0); lastMoveAt = now; }
+        }
+
+        if (mode === "town" && (now - lastNpcAtTown) >= NPC_MS_TOWN) {
+          tickTownNpcs();
+          lastNpcAtTown = now;
+          renderTown();
+        }
+
+        if (mode === "interior" && (now - lastNpcAtInterior) >= NPC_MS_INTERIOR) {
+          tickInteriorNpcs();
+          lastNpcAtInterior = now;
+          renderInterior();
+        }
+      }
+    }
+
+    requestAnimationFrame(mainLoop);
+  }
+
+  // ---------------- Input ----------------
+  function startGameFromTitle() {
+    startAudio();
+    mode = "overworld";
+    applyMusicForMode();
+    render();
+  }
+
+  window.addEventListener('keydown', (e) => {
+    if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)) e.preventDefault();
+
+    if (mode === "title") {
+      if (e.key === 'Enter' || e.key === ' ') {
+        unlockAudioIfNeeded();
+        startGameFromTitle();
+      } else {
+        unlockAudioIfNeeded();
+      }
+      return;
+    }
+
+    if (dialogue.active) {
+      if (e.key === 'Enter') advanceDialogue();
+      return;
+    }
+
+    if (e.key === 'Enter') {
+      // (reserved: later you could add "talk" interaction)
+      return;
+    }
+
+    const k = (e.key.length === 1) ? e.key.toLowerCase() : e.key;
+    if (k === 'w' || k === 'a' || k === 's' || k === 'd' || k.startsWith('Arrow')) keysDown.add(k);
+  }, { passive: false });
+
+  window.addEventListener('keyup', (e) => {
+    const k = (e.key.length === 1) ? e.key.toLowerCase() : e.key;
+    keysDown.delete(k);
+  });
+
+  screenEl.addEventListener('click', () => screenEl.focus());
+
+  // Boot
+  setTempo(120);
+  setTrack("title");
+  applyMusicForMode();
+  render();
+  requestAnimationFrame(mainLoop);
+})();
+</script>
+</body>
+</html>
