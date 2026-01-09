@@ -68,6 +68,42 @@
       border: 1px solid #333;
       white-space: pre;
     }
+    #touchControls{
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  display: none;
+}
+
+#touchControls .btn{
+  position: absolute;
+  width: 84px;
+  height: 84px;
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.25);
+  background: rgba(255,255,255,0.06);
+  pointer-events: auto;
+  touch-action: none;
+}
+
+#touchControls .btn:active{
+  background: rgba(255,255,255,0.12);
+}
+
+#touchControls .up{ left: 28px; bottom: 170px; }
+#touchControls .down{ left: 28px; bottom: 50px; }
+#touchControls .left{ left: -10px; bottom: 110px; }
+#touchControls .right{ left: 66px; bottom: 110px; }
+
+#touchControls .enter{
+  right: 24px;
+  bottom: 80px;
+  width: 92px;
+  height: 92px;
+  border-radius: 22px;
+  font-size: 28px;
+  color: rgba(255,255,255,0.9);
+}
   </style>
 </head>
 <body>
@@ -843,6 +879,59 @@
   let lastMoveAt = 0;
   let lastNpcAtTown = 0;
   let lastNpcAtInterior = 0;
+
+  const touchEl = document.getElementById("touchControls");
+
+function isTouchDevice() {
+  return window.matchMedia("(pointer: coarse)").matches ||
+         window.matchMedia("(hover: none)").matches ||
+         navigator.maxTouchPoints > 0;
+}
+
+function updateTouchUI() {
+  const show = isTouchDevice() || window.innerWidth < 700;
+  touchEl.style.display = show ? "block" : "none";
+  touchEl.setAttribute("aria-hidden", show ? "false" : "true");
+}
+window.addEventListener("resize", updateTouchUI);
+updateTouchUI();
+
+function pressKey(k) {
+  const key = (k.length === 1) ? k.toLowerCase() : k;
+  keysDown.add(key);
+}
+function releaseKey(k) {
+  const key = (k.length === 1) ? k.toLowerCase() : k;
+  keysDown.delete(key);
+}
+
+function doEnterAction() {
+  if (mode === "title") { unlockAudioIfNeeded(); startGameFromTitle(); return; }
+  if (dialogue.active) { advanceDialogue(); return; }
+}
+
+for (const btn of touchEl.querySelectorAll(".btn")) {
+  const key = btn.dataset.key;
+  const action = btn.dataset.action;
+
+  const onDown = (e) => {
+    e.preventDefault();
+    if (action === "enter") doEnterAction();
+    if (key) pressKey(key);
+  };
+  const onUp = (e) => {
+    e.preventDefault();
+    if (key) releaseKey(key);
+  };
+
+  btn.addEventListener("touchstart", onDown, { passive: false });
+  btn.addEventListener("touchend", onUp, { passive: false });
+  btn.addEventListener("touchcancel", onUp, { passive: false });
+
+  btn.addEventListener("mousedown", onDown);
+  btn.addEventListener("mouseup", onUp);
+  btn.addEventListener("mouseleave", onUp);
+}
 
   function applyMusicForMode() {
     if (mode === "title") setTrack("title");
