@@ -71,8 +71,13 @@
   </style>
 </head>
 <body>
-  <div id="screen" tabindex="0"></div>
-  <div id="hud"></div>
+  <div id="touchControls" aria-hidden="true">
+  <button class="btn up" data-key="ArrowUp"></button>
+  <button class="btn left" data-key="ArrowLeft"></button>
+  <button class="btn right" data-key="ArrowRight"></button>
+  <button class="btn down" data-key="ArrowDown"></button>
+  <button class="btn enter" data-action="enter">⏎</button>
+</div>
 
 <script>
 (() => {
