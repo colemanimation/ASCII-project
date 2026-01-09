@@ -866,6 +866,11 @@
   const screenEl = document.getElementById('screen');
   const hudEl = document.getElementById('hud');
 
+  if (!screenEl || !hudEl) {
+  document.body.innerHTML = "<pre>Fatal: missing #screen or #hud</pre>";
+  throw new Error("Missing #screen or #hud");
+}
+
   const overworld = generateOverworld(MAP_W, MAP_H, 42);
 
   // Modes: title | overworld | town | interior
@@ -885,57 +890,62 @@
   let lastNpcAtTown = 0;
   let lastNpcAtInterior = 0;
 
+function initTouchControls() {
   const touchEl = document.getElementById("touchControls");
+  if (!touchEl) return; // do not crash the game
 
-function isTouchDevice() {
-  return window.matchMedia("(pointer: coarse)").matches ||
-         window.matchMedia("(hover: none)").matches ||
-         navigator.maxTouchPoints > 0;
-}
+  function isTouchDevice() {
+    return window.matchMedia("(pointer: coarse)").matches ||
+           window.matchMedia("(hover: none)").matches ||
+           navigator.maxTouchPoints > 0;
+  }
 
-function updateTouchUI() {
-  const show = isTouchDevice() || window.innerWidth < 700;
-  touchEl.style.display = show ? "block" : "none";
-  touchEl.setAttribute("aria-hidden", show ? "false" : "true");
-}
-window.addEventListener("resize", updateTouchUI);
-updateTouchUI();
+  function updateTouchUI() {
+    const show = isTouchDevice() || window.innerWidth < 700;
+    touchEl.style.display = show ? "block" : "none";
+    touchEl.setAttribute("aria-hidden", show ? "false" : "true");
+  }
 
-function pressKey(k) {
-  const key = (k.length === 1) ? k.toLowerCase() : k;
-  keysDown.add(key);
-}
-function releaseKey(k) {
-  const key = (k.length === 1) ? k.toLowerCase() : k;
-  keysDown.delete(key);
-}
+  window.addEventListener("resize", updateTouchUI);
+  updateTouchUI();
 
-function doEnterAction() {
-  if (mode === "title") { unlockAudioIfNeeded(); startGameFromTitle(); return; }
-  if (dialogue.active) { advanceDialogue(); return; }
-}
+  function pressKey(k) {
+    const key = (k.length === 1) ? k.toLowerCase() : k;
+    keysDown.add(key);
+  }
+  function releaseKey(k) {
+    const key = (k.length === 1) ? k.toLowerCase() : k;
+    keysDown.delete(key);
+  }
 
-for (const btn of touchEl.querySelectorAll(".btn")) {
-  const key = btn.dataset.key;
-  const action = btn.dataset.action;
+  function doEnterAction() {
+    if (mode === "title") { unlockAudioIfNeeded(); startGameFromTitle(); return; }
+    if (dialogue && dialogue.active) { advanceDialogue(); return; }
+  }
 
-  const onDown = (e) => {
-    e.preventDefault();
-    if (action === "enter") doEnterAction();
-    if (key) pressKey(key);
-  };
-  const onUp = (e) => {
-    e.preventDefault();
-    if (key) releaseKey(key);
-  };
+  for (const btn of touchEl.querySelectorAll(".btn")) {
+    const key = btn.dataset.key;
+    const action = btn.dataset.action;
 
-  btn.addEventListener("touchstart", onDown, { passive: false });
-  btn.addEventListener("touchend", onUp, { passive: false });
-  btn.addEventListener("touchcancel", onUp, { passive: false });
+    const onDown = (e) => {
+      e.preventDefault();
+      if (action === "enter") doEnterAction();
+      if (key) pressKey(key);
+    };
+    const onUp = (e) => {
+      e.preventDefault();
+      if (key) releaseKey(key);
+    };
 
-  btn.addEventListener("mousedown", onDown);
-  btn.addEventListener("mouseup", onUp);
-  btn.addEventListener("mouseleave", onUp);
+    btn.addEventListener("touchstart", onDown, { passive: false });
+    btn.addEventListener("touchend", onUp, { passive: false });
+    btn.addEventListener("touchcancel", onUp, { passive: false });
+
+    btn.addEventListener("mousedown", onDown);
+    btn.addEventListener("mouseup", onUp);
+    btn.addEventListener("mouseleave", onUp);
+  }
+}onUp);
 }
 
   function applyMusicForMode() {
@@ -1426,7 +1436,9 @@ for (const btn of touchEl.querySelectorAll(".btn")) {
   });
 
   screenEl.addEventListener('click', () => screenEl.focus());
-
+    
+  initTouchControls();
+    
   // Boot
   setTempo(120);
   setTrack("title");
