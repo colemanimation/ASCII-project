@@ -104,13 +104,116 @@
   font-size: 28px;
   color: rgba(255,255,255,0.9);
 }
+/* Layout shell */
+#layout { width: 100%; }
+#mainRow { display: flex; gap: 12px; align-items: flex-start; }
+#bottomRow { margin-top: 12px; }
+
+/* Side panel */
+#sidePanel { width: 280px; }
+.panelBox{
+  border: 1px solid #333;
+  border-radius: 10px;
+  padding: 10px;
+  background: #0b0b0b;
+  color: #eee;
+}
+.panelTitle{
+  font-weight: 700;
+  margin: 6px 0 6px 0;
+  opacity: 0.9;
+}
+#npcArt, #invText{
+  margin: 0;
+  white-space: pre;
+  font-size: 12px;
+  line-height: 1.1;
+  min-height: 120px;
+}
+
+/* Controls bar placeholder */
+#controlsBar{
+  display: none; /* only used on mobile */
+}
+
+/* Mobile mode */
+@media (max-width: 820px){
+  body { margin: 10px; }
+  #mainRow { gap: 10px; }
+  #sidePanel { width: 36vw; max-width: 220px; }
+  #screen { max-height: 52vh; }
+  #hud { max-width: 100%; }
+
+  #controlsBar{
+    display: block;
+    margin-top: 10px;
+    border: 1px solid #333;
+    border-radius: 12px;
+    background: #0b0b0b;
+    padding: 12px;
+    position: relative;
+    height: 180px;
+  }
+}
+
+/* Touch controls: make them less transparent and more readable */
+#touchControls .btn{
+  border: 1px solid rgba(255,255,255,0.35);
+  background: rgba(0,0,0,0.55);
+}
+#touchControls .btn:active{
+  background: rgba(0,0,0,0.78);
+}
+#touchControls .enter{
+  font-weight: 800;
+}
+#screenWrap{ position: relative; display: inline-block; }
+#debugOverlay{
+  position: absolute;
+  left: 10px;
+  top: 10px;
+  margin: 0;
+  padding: 10px;
+  border-radius: 10px;
+  background: rgba(0,0,0,0.65);
+  color: #ff4b4b;
+  border: 1px solid rgba(255,255,255,0.25);
+  display: none;
+  max-width: 90%;
+  white-space: pre-wrap;
+  font-size: 12px;
+  line-height: 1.1;
+  pointer-events: none;
+}
   </style>
 </head>
 <body>
-  <div id="gameWrap">
-    <div id="screen" tabindex="0"></div>
-    <div id="hud"></div>
+  <div id="layout">
+  <div id="mainRow">
+    <div id="gameWrap">
+      <div id="screenWrap">
+  <div id="screen" tabindex="0"></div>
+  <pre id="debugOverlay"></pre>
+</div>
+
+    <div id="sidePanel">
+      <div class="panelBox" id="npcPanel">
+        <div class="panelTitle">NPC</div>
+        <pre id="npcArt">(none)</pre>
+        <div class="panelTitle">Items</div>
+        <pre id="invText">(none)</pre>
+      </div>
+    </div>
   </div>
+
+  <div id="bottomRow">
+    <div id="hud"></div>
+
+    <div id="controlsBar">
+      <!-- Touch controls live here on mobile -->
+    </div>
+  </div>
+</div>
 
   <div id="touchControls" aria-hidden="true">
     <button class="btn up" data-key="ArrowUp"></button>
@@ -897,6 +1000,12 @@
   let lastMoveAt = 0;
   let lastNpcAtTown = 0;
   let lastNpcAtInterior = 0;
+  
+  let paused = false;
+let showDebug = false;
+  
+  function togglePause() { paused = !paused; render(); }
+function toggleDebug() { showDebug = !showDebug; render(); }
 
 function initTouchControls() {
   const touchEl = document.getElementById("touchControls");
@@ -1076,7 +1185,7 @@ function initTouchControls() {
     const tile = townObj.grid[py][px];
     const dlg = renderDialogueBox();
     hudEl.innerHTML =
-      `Mode: <b>Town</b> (${townObj.w}x${townObj.h}) | Pos: (${px},${py}) Tile: <b>${escapeHtml(tile)}</b><br>` +
+      `Mode: <b>Town</b> (${townObj.w}x${townObj.h}) | Pos: (${px},${py}) | Facing: ${facing} Tile: <b>${escapeHtml(tile)}</b><br>` +
       `Roof letters: <b>S</b> shop, <b>C</b> chapel, <b>H</b> home. Doors (+) enter interiors. Walk off edge to leave town.` +
       (dlg ? `<pre class="dialogue">${escapeHtml(dlg)}</pre>` : "");
   }
@@ -1128,6 +1237,11 @@ function initTouchControls() {
     else if (mode === "overworld") renderOverworld();
     else if (mode === "town") renderTown();
     else renderInterior();
+    const dbg = document.getElementById("debugOverlay");
+if (dbg) {
+  dbg.style.display = showDebug ? "block" : "none";
+  if (showDebug) dbg.textContent = hudEl ? hudEl.innerText : "";
+}
   }
 
   // ---------------- Mode transitions ----------------
@@ -1215,6 +1329,10 @@ function initTouchControls() {
   }
 
   function tryMove(dx, dy) {
+    if (dx === 1) facing = "right";
+else if (dx === -1) facing = "left";
+else if (dy === 1) facing = "down";
+else if (dy === -1) facing = "up";
     if (dialogue.active) return; // paused
 
     if (mode === "title") return;
@@ -1403,6 +1521,11 @@ function initTouchControls() {
     }
 
     requestAnimationFrame(mainLoop);
+    if (paused) {
+  render(); // still render so overlay updates
+  requestAnimationFrame(mainLoop);
+  return;
+}
   }
 
   // ---------------- Input ----------------
