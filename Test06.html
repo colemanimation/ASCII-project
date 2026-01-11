@@ -1037,6 +1037,7 @@ function initTouchControls() {
     const dlg = renderDialogueBox();
     hudEl.innerHTML =
       `Mode: <b>Overworld</b> | Pos: (${px},${py}) Tile: <b>${escapeHtml(overworld[py][px])}</b><br>` +
+       `<div style="opacity:.7">Audio: ${audio.ctx ? audio.ctx.state : "no ctx"}</div>` +
       `Move: <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or Arrow Keys. Step on <b>T</b> to enter town.` +
       (dlg ? `<pre class="dialogue">${escapeHtml(dlg)}</pre>` : "");
   }
