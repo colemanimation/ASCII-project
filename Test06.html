@@ -104,6 +104,10 @@
   font-size: 28px;
   color: rgba(255,255,255,0.9);
 }
+#touchControls .dbg{
+  opacity: 0.92;
+  font-weight: 700;
+}
 /* Layout shell */
 #layout { width: 100%; }
 #mainRow { display: flex; gap: 12px; align-items: flex-start; }
@@ -207,20 +211,21 @@
 #screenWrap{ position: relative; display: inline-block; }
 #debugOverlay{
   position: absolute;
-  left: 10px;
   top: 10px;
-  margin: 0;
-  padding: 10px;
-  border-radius: 10px;
-  background: rgba(0,0,0,0.65);
-  color: #ff4b4b;
-  border: 1px solid rgba(255,255,255,0.25);
+  left: 10px;
+  z-index: 999;
   display: none;
-  max-width: 90%;
-  white-space: pre-wrap;
-  font-size: 12px;
-  line-height: 1.1;
+
+  color: #ff3b3b;
+  background: rgba(0,0,0,0.55);
+  padding: 8px 10px;
+  border-radius: 10px;
+
+  font: 12px/1.25 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  white-space: pre;
   pointer-events: none;
+}
+pointer-events: none;
 }
   </style>
 </head>
@@ -259,7 +264,8 @@
     <button class="btn left" data-key="ArrowLeft"></button>
     <button class="btn right" data-key="ArrowRight"></button>
     <button class="btn down" data-key="ArrowDown"></button>
-    <button class="btn enter" data-action="enter">⏎</button>
+    <button class="btn enter" data-action="enter">↩︎</button>
+    <button class="btn dbg" data-action="debug">DBG</button>
   </div>
 
   <script>
@@ -1091,6 +1097,11 @@ function initTouchControls() {
       if (action === "enter") doEnterAction();
       if (key) pressKey(key);
     };
+      if (action === "debug") {
+  showDebug = !showDebug;
+  render();
+  return;
+}
     const onUp = (e) => {
       e.preventDefault();
       if (key) releaseKey(key);
@@ -1185,10 +1196,9 @@ function initTouchControls() {
 
     const dlg = renderDialogueBox();
     hudEl.innerHTML =
-      `Mode: <b>Overworld</b> | Pos: (${px},${py}) Tile: <b>${escapeHtml(overworld[py][px])}</b><br>` +
-       `<div style="opacity:.7">Audio: ${audio.ctx ? audio.ctx.state : "no ctx"}</div>` +
-      `Move: <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or Arrow Keys. Step on <b>T</b> to enter town.` +
-      (dlg ? `<pre class="dialogue">${escapeHtml(dlg)}</pre>` : "");
+  `Mode: <b>Overworld</b> | Pos: (${px},${py}) Tile: <b>${escapeHtml(overworld[py][px])}</b><br>` +
+  `Move: <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or Arrow Keys. Step on <b>T</b> to enter town.` +
+  (dlg ? `<pre class="dialogue">${escapeHtml(dlg)}</pre>` : "");
   }
 
   function renderTown() {
@@ -1279,10 +1289,25 @@ function initTouchControls() {
     else renderInterior();
     const dbg = document.getElementById("debugOverlay");
 if (dbg) {
-  dbg.style.display = showDebug ? "block" : "none";
-  if (showDebug) dbg.textContent = hudEl ? hudEl.innerText : "";
-}
+  if (!showDebug) {
+    dbg.style.display = "none";
+  } else {
+    dbg.style.display = "block";
+
+    let tile = "";
+    if (mode === "overworld") tile = overworld?.[py]?.[px] ?? "";
+    else if (mode === "town") tile = townObj?.grid?.[py]?.[px] ?? "";
+    else if (mode !== "title") tile = interiorObj?.grid?.[py]?.[px] ?? "";
+
+    dbg.textContent =
+      `DEBUG` + "\n" +
+      `mode: ${mode}` + "\n" +
+      `pos: (${px},${py})` + "\n" +
+      `facing: ${typeof facing !== "undefined" ? facing : ""}` + "\n" +
+      `tile: ${tile}` + "\n" +
+      `audio: ${audio?.ctx ? audio.ctx.state : "no ctx"}`;
   }
+}
 
   // ---------------- Mode transitions ----------------
   function getOrCreateTown(overX, overY) {
