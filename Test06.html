@@ -182,7 +182,7 @@
 }
 
 
-  #controlsBar{
+    #controlsBar{
     display: block;
     margin-top: 10px;
     border: 1px solid #333;
@@ -192,7 +192,6 @@
     position: relative;
     height: 180px;
   }
-}
 
 /* Touch controls: make them less transparent and more readable */
 #touchControls .btn{
@@ -226,25 +225,27 @@
   </style>
 </head>
 <body>
-  <div id="layout">
-  <div id="mainRow">
-    <div id="gameWrap">
-      <div id="screenWrap">
-  <div id="screen" tabindex="0"></div>
-  <pre id="debugOverlay"></pre>
-</div>
+    <div id="layout">
 
-    <div id="sidePanel">
-      <div class="panelBox" id="npcPanel">
-        <div class="panelTitle">NPC</div>
-        <pre id="npcArt">(none)</pre>
-        <div class="panelTitle">Items</div>
-        <pre id="invText">(none)</pre>
+    <div id="mainRow">
+      <div id="gameWrap">
+        <div id="screenWrap">
+          <div id="screen" tabindex="0"></div>
+          <pre id="debugOverlay"></pre>
+        </div>
       </div>
-    </div>
-  </div>
 
-  <div id="bottomRow">
+      <div id="sidePanel">
+        <div class="panelBox" id="npcPanel">
+          <div class="panelTitle">NPC</div>
+          <pre id="npcArt">(none)</pre>
+          <div class="panelTitle">Items</div>
+          <pre id="invText">(none)</pre>
+        </div>
+      </div>
+    </div> <!-- ✅ CLOSE mainRow -->
+
+    <div id="bottomRow">
     <div id="hud"></div>
 
     <div id="controlsBar">
