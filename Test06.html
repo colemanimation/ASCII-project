@@ -141,12 +141,32 @@
   body { margin: 10px; }
   #mainRow { gap: 10px; }
   #sidePanel { width: 36vw; max-width: 220px; }
+
   #screen{
-  max-height: none;
-  height: calc(100vh - 220px);
-  overflow: hidden;
+    max-height: none;
+    height: calc(100vh - 220px);
+    overflow: hidden;
+  }
+
+  #bottomRow{
+    width: 100%;
+  }
+
+  #hud{
+    width: 100%;
+    max-width: 100%;
+    height: 110px;
+    overflow: auto;
+  }
+
+  /* Make the dialogue box fill the HUD width */
+  pre.dialogue{
+    width: 100%;
+    box-sizing: border-box;
+    margin: 0;
+  }
 }
-  #hud { max-width: 100%; }
+
 
   #controlsBar{
     display: block;
