@@ -213,9 +213,6 @@
   position: absolute;
   top: 10px;
   left: 10px;
-  z-index: 999;
-  display: none;
-
   color: #ff3b3b;
   background: rgba(0,0,0,0.55);
   padding: 8px 10px;
@@ -224,8 +221,7 @@
   font: 12px/1.25 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
   white-space: pre;
   pointer-events: none;
-}
-pointer-events: none;
+  display: none;
 }
   </style>
 </head>
@@ -1091,21 +1087,20 @@ function initTouchControls() {
     const action = btn.dataset.action;
 
     const onDown = (e) => {
-      e.preventDefault();
-      unlockAudioOnUserGesture();
-      
-      if (action === "enter") doEnterAction();
-      if (key) pressKey(key);
-    };
-      if (action === "debug") {
-  showDebug = !showDebug;
-  render();
-  return;
-}
-    const onUp = (e) => {
-      e.preventDefault();
-      if (key) releaseKey(key);
-    };
+  e.preventDefault();
+  unlockAudioOnUserGesture();
+
+  if (action === "debug") { toggleDebug(); return; }
+  if (action === "enter") { doEnterAction(); return; }
+
+  if (key) pressKey(key);
+};
+
+const onUp = (e) => {
+  e.preventDefault();
+  if (key) releaseKey(key);
+};
+
 
     btn.addEventListener("touchstart", onDown, { passive: false });
     btn.addEventListener("touchend", onUp, { passive: false });
