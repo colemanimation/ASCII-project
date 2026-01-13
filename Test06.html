@@ -1295,14 +1295,15 @@ if (dbg) {
     else if (mode !== "title") tile = interiorObj?.grid?.[py]?.[px] ?? "";
 
     dbg.textContent =
-      `DEBUG` + "\n" +
-      `mode: ${mode}` + "\n" +
-      `pos: (${px},${py})` + "\n" +
-      `facing: ${typeof facing !== "undefined" ? facing : ""}` + "\n" +
-      `tile: ${tile}` + "\n" +
-      `audio: ${audio?.ctx ? audio.ctx.state : "no ctx"}`;
+  `DEBUG` + "\n" +
+  `mode: ${mode}` + "\n" +
+  `pos: (${px},${py})` + "\n" +
+  `facing: ${typeof facing !== "undefined" ? facing : ""}` + "\n" +
+  `tile: ${tile}` + "\n" +
+  `audio: ${audio?.ctx ? audio.ctx.state : "no ctx"}`;
   }
 }
+} // ✅ CLOSE render()
 
   // ---------------- Mode transitions ----------------
   function getOrCreateTown(overX, overY) {
@@ -1580,12 +1581,13 @@ else if (dy === -1) facing = "up";
       }
     }
 
-    requestAnimationFrame(mainLoop);
     if (paused) {
-  render(); // still render so overlay updates
+  render();
   requestAnimationFrame(mainLoop);
   return;
 }
+
+requestAnimationFrame(mainLoop);
   }
 
   // ---------------- Input ----------------
