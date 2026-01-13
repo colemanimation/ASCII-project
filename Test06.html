@@ -1177,10 +1177,8 @@ const onUp = (e) => {
     screenEl.innerHTML = html;
 
     const dlg = renderDialogueBox();
-    hudEl.innerHTML =
-      `Mode: <b>Title</b> | <kbd>Enter</kbd> or <kbd>Space</kbd> to start (audio begins after that).` +
-      (dlg ? `<pre class="dialogue">${escapeHtml(dlg)}</pre>` : "");
-  }
+    hudEl.innerHTML = dlg ? `<pre class="dialogue">${escapeHtml(dlg)}</pre>` : "";
+
 
   function renderOverworld() {
     const { camX, camY } = camFor(px, py, MAP_W, MAP_H);
@@ -1203,11 +1201,7 @@ const onUp = (e) => {
     screenEl.innerHTML = html;
 
     const dlg = renderDialogueBox();
-    hudEl.innerHTML =
-  `Mode: <b>Overworld</b> | Pos: (${px},${py}) Tile: <b>${escapeHtml(overworld[py][px])}</b><br>` +
-  `Move: <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or Arrow Keys. Step on <b>T</b> to enter town.` +
-  (dlg ? `<pre class="dialogue">${escapeHtml(dlg)}</pre>` : "");
-  }
+      hudEl.innerHTML = dlg ? `<pre class="dialogue">${escapeHtml(dlg)}</pre>` : "";
 
   function renderTown() {
     const { camX, camY } = camFor(px, py, townObj.w, townObj.h);
@@ -1242,11 +1236,8 @@ const onUp = (e) => {
 
     const tile = townObj.grid[py][px];
     const dlg = renderDialogueBox();
-    hudEl.innerHTML =
-      `Mode: <b>Town</b> (${townObj.w}x${townObj.h}) | Pos: (${px},${py}) | Facing: ${facing} Tile: <b>${escapeHtml(tile)}</b><br>` +
-      `Roof letters: <b>S</b> shop, <b>C</b> chapel, <b>H</b> home. Doors (+) enter interiors. Walk off edge to leave town.` +
-      (dlg ? `<pre class="dialogue">${escapeHtml(dlg)}</pre>` : "");
-  }
+        hudEl.innerHTML = dlg ? `<pre class="dialogue">${escapeHtml(dlg)}</pre>` : "";
+
 
   function renderInterior() {
     const w = interiorObj.w, h = interiorObj.h;
@@ -1284,11 +1275,8 @@ const onUp = (e) => {
 
     const tile = interiorObj.grid[py][px];
     const dlg = renderDialogueBox();
-    hudEl.innerHTML =
-      `Mode: <b>${interiorObj.kind}</b> | Pos: (${px},${py}) Tile: <b>${escapeHtml(tile)}</b><br>` +
-      `Step on <b>&gt;</b> to leave.` +
-      (dlg ? `<pre class="dialogue">${escapeHtml(dlg)}</pre>` : "");
-  }
+    hudEl.innerHTML = dlg ? `<pre class="dialogue">${escapeHtml(dlg)}</pre>` : "";
+
 
   function render() {
     if (mode === "title") renderTitle();
