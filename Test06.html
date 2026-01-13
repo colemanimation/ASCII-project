@@ -152,14 +152,27 @@
   max-width: 100%;
   overflow: hidden;
 }
-  #sidePanel{
-  width: 34vw;
-  max-width: 200px;
-  flex: 0 0 auto;
-}
+    #sidePanel{
+    width: 34vw;
+    max-width: 200px;
+    flex: 0 0 auto;
+  }
 
+  /* ✅ Make the game area take the remaining width */
+  #gameWrap{
+    flex: 1 1 auto;
+    min-width: 0; /* important for flex children to not collapse weirdly */
+  }
+
+  #screenWrap{
+    display: block;
+    width: 100%;
+  }
 
   #screen{
+    display: block;     /* was inline-block */
+    width: 100%;        /* ✅ fill available width */
+    max-width: 100%;
     max-height: none;
     height: calc(100vh - 220px);
     overflow: hidden;
