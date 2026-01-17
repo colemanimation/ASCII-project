@@ -17,7 +17,7 @@ html, body {
 #app {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100svh;
   padding: 4px;
   gap: 4px;
 }
@@ -58,15 +58,18 @@ html, body {
 }
 
 #dialogue {
-  height: 80px;
+  height: 64px;
+  flex: 0 0 auto;
 }
 
 #controls {
+  flex: 0 0 140px; /* GUARANTEED VISIBLE */
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-template-rows: auto auto;
   gap: 8px;
   align-items: center;
+  justify-items: center;
 }
 
 #dpad {
@@ -98,8 +101,10 @@ button {
   background: #000;
   color: #fff;
   border: 2px double #fff;
-  font-size: 16px;
-  padding: 6px 12px;
+  font-size: 14px;
+  padding: 6px 10px;
+  min-width: 44px;
+  min-height: 44px;
 }
 
 button:active {
