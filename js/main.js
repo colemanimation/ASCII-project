@@ -62,7 +62,7 @@ function tryMove(dir) {
 }
 
 function render() {
-  renderMapToPre(els.map, state.map, state.player);
+  renderMapToPre(els.map, state.map, state.player, CONFIG.viewWidth, CONFIG.viewHeight);
 }
 
 async function boot() {
