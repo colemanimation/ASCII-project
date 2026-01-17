@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>ASCII Project</title>
+
+  <!-- iOS app-like behavior -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="app">
+
+  <!-- TOP: map + side panel -->
+  <div id="top">
+    <pre id="map" class="panel"></pre>
+
+    <div id="side">
+      <pre id="portrait" class="panel small"></pre>
+      <pre id="inventory" class="panel small"></pre>
+    </div>
+  </div>
+
+  <!-- DIALOGUE -->
+  <pre id="dialogue" class="panel"></pre>
+
+  <!-- CONTROLS -->
+  <div id="controls" class="panel">
+    <div id="dpad">
+      <button data-dir="up">▲</button>
+      <div>
+        <button data-dir="left">◀</button>
+        <button data-dir="right">▶</button>
+      </div>
+      <button data-dir="down">▼</button>
+    </div>
+
+    <div id="buttons">
+      <button id="btnA">A</button>
+      <button id="btnB">B</button>
+    </div>
+
+    <div id="system">
+      <button id="btnSelect">Select</button>
+      <button id="btnStart">Start</button>
+    </div>
+  </div>
+
+</div>
+
+<script src="game.js"></script>
+</body>
+</html>
