@@ -3,13 +3,12 @@ const dialogue = document.getElementById("dialogue");
 const portrait = document.getElementById("portrait");
 const inventory = document.getElementById("inventory");
 
-map.textContent =
-`....................
-....................
-....@...............
-....................
-....................
-....................`;
+map.innerHTML =
+`<span style="color:#777">####################</span>
+<span style="color:#777">#..................#</span>
+<span style="color:#777">#....</span><span style="color:#bbb">@</span><span style="color:#777">..............#</span>
+<span style="color:#777">#..................#</span>
+<span style="color:#777">####################</span>`;
 
 portrait.textContent =
 `  O
