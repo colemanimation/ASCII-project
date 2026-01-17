@@ -1,0 +1,106 @@
+* {
+  box-sizing: border-box;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: #000;
+  color: #0f0;
+  height: 100%;
+  overscroll-behavior: none;
+  touch-action: none;
+}
+
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  padding: 4px;
+  gap: 4px;
+}
+
+.panel {
+  border: 2px double #0f0;
+  padding: 4px;
+  background: #000;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 14px;
+  line-height: 14px;
+  white-space: pre;
+  overflow: hidden;
+}
+
+#top {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 4px;
+  flex: 1;
+}
+
+#map {
+  width: 100%;
+}
+
+#side {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.small {
+  width: 140px;
+  height: 140px;
+}
+
+#dialogue {
+  height: 80px;
+}
+
+#controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto auto;
+  gap: 8px;
+  align-items: center;
+}
+
+#dpad {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+#dpad div {
+  display: flex;
+  gap: 16px;
+}
+
+#buttons {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+}
+
+#system {
+  grid-column: span 2;
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+button {
+  background: #000;
+  color: #0f0;
+  border: 2px double #0f0;
+  font-size: 16px;
+  padding: 6px 12px;
+}
+
+button:active {
+  background: #0f0;
+  color: #000;
+}
