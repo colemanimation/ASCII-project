@@ -8,7 +8,7 @@ html, body {
   margin: 0;
   padding: 0;
   background: #000;
-  color: #0f0;
+  color: #fff;
   height: 100%;
   overscroll-behavior: none;
   touch-action: none;
@@ -23,7 +23,7 @@ html, body {
 }
 
 .panel {
-  border: 2px double #0f0;
+  border: 2px double #fff;
   padding: 4px;
   background: #000;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
@@ -31,6 +31,7 @@ html, body {
   line-height: 14px;
   white-space: pre;
   overflow: hidden;
+  color: #fff;
 }
 
 #top {
@@ -94,13 +95,13 @@ html, body {
 
 button {
   background: #000;
-  color: #0f0;
-  border: 2px double #0f0;
+  color: #fff;
+  border: 2px double #fff;
   font-size: 16px;
   padding: 6px 12px;
 }
 
 button:active {
-  background: #0f0;
+  background: #fff;
   color: #000;
 }
