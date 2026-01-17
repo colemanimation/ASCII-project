@@ -1,6 +1,6 @@
 export const CONFIG = {
   defaultMap: "world_continent",
-  defaultSpawn: { x: 40, y: 18, facing: "down" }, // foot tile coords
+  defaultSpawn: { x: 14, y: 10, facing: "down" }, // foot tile coords
   useUrlMapOverride: true,
   
     // Camera viewport in tiles (characters)
