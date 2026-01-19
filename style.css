@@ -43,8 +43,11 @@ html, body {
 }
 
 #map {
-  color: #ccc;
-  width: 100%;
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  white-space: pre;
+  line-height: 1;
+  letter-spacing: 0;
+  font-variant-ligatures: none;
 }
 
 #side {
