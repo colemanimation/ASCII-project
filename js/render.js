@@ -30,8 +30,11 @@ export function renderMapToPre(preEl, mapObj, player, viewW, viewH) {
   const vh = Math.min(viewH, height);
 
   // Center camera on player foot tile, clamp to map bounds
-  const camX = clamp(player.x - Math.floor(vw / 2), 0, Math.max(0, width - vw));
-  const camY = clamp(player.y - Math.floor(vh / 2), 0, Math.max(0, height - vh));
+  const halfW = Math.floor((vw - 1) / 2);
+  const halfH = Math.floor((vh - 1) / 2);
+
+  const camX = clamp(player.x - halfW, 0, Math.max(0, width - vw));
+  const camY = clamp(player.y - halfH, 0, Math.max(0, height - vh));
 
   // Build viewport html grid
   const htmlGrid = Array.from({ length: vh }, (_, sy) => {
