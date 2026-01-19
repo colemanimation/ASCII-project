@@ -4,6 +4,6 @@ export const CONFIG = {
   useUrlMapOverride: true,
   
     // Camera viewport in tiles (characters)
-  viewWidth: 48,
-  viewHeight: 22,
+  viewWidth: 49,
+  viewHeight: 23,
 };
