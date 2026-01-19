@@ -2,6 +2,14 @@ function escHtml(s) {
   return s.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
 }
 
+const DISPLAY_GLYPH = {
+  "≈": "~",   // deep water displays as ~
+  "¥": "Y",   // forest alt displays as Y
+  "▲": "#",   // mountains display as #
+  "‘": "'",   // curly quote snow -> ascii apostrophe
+  "’": "'",   // just in case
+};
+
 // Muted palette
 const TILE_COLOR = {
   "#": "#8a8a8a",
@@ -13,8 +21,9 @@ const TILE_COLOR = {
 };
 
 function tileSpan(ch) {
-  const c = TILE_COLOR[ch] || "#cfcfcf";
-  const safe = ch === " " ? "&nbsp;" : escHtml(ch);
+  const display = DISPLAY_GLYPH[ch] || ch;
+  const c = TILE_COLOR[ch] || TILE_COLOR[display] || "#cfcfcf";
+  const safe = display === " " ? "&nbsp;" : escHtml(display);
   return `<span style="color:${c}">${safe}</span>`;
 }
 
