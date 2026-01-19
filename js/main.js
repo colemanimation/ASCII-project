@@ -61,8 +61,42 @@ function tryMove(dir) {
   render();
 }
 
+function measureCharSize(preEl) {
+  const probe = document.createElement("span");
+  probe.textContent = "MMMMMMMMMM"; // 10 chars
+  probe.style.visibility = "hidden";
+  probe.style.position = "absolute";
+  probe.style.whiteSpace = "pre";
+  probe.style.font = getComputedStyle(preEl).font;
+  document.body.appendChild(probe);
+
+  const rect = probe.getBoundingClientRect();
+  document.body.removeChild(probe);
+
+  return { cw: rect.width / 10, ch: rect.height };
+}
+
+function computeViewport(preEl, desiredW, desiredH) {
+  const { cw, ch } = measureCharSize(preEl);
+
+  const fitW = Math.floor(preEl.clientWidth / cw);
+  const fitH = Math.floor(preEl.clientHeight / ch);
+
+  let vw = Math.max(9, fitW);
+  let vh = Math.max(9, fitH);
+
+  if (vw % 2 === 0) vw -= 1;
+  if (vh % 2 === 0) vh -= 1;
+
+  vw = Math.min(vw, desiredW);
+  vh = Math.min(vh, desiredH);
+
+  return { vw, vh };
+}
+
 function render() {
-  renderMapToPre(els.map, state.map, state.player, CONFIG.viewWidth, CONFIG.viewHeight);
+  const { vw, vh } = computeViewport(els.map, CONFIG.viewWidth, CONFIG.viewHeight);
+  renderMapToPre(els.map, state.map, state.player, vw, vh);
 }
 
 async function boot() {
@@ -75,6 +109,7 @@ async function boot() {
 
   els.dialogue.textContent = `Loaded ${startMap}. Tip: add ?map=NAME to URL.`;
   render();
+  window.addEventListener("resize", render);
 
   bindInput({
     onMove: tryMove,
