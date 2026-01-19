@@ -36,10 +36,11 @@ html, body {
 
 #top {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: 1fr 140px; /* instead of 1fr auto */
   gap: 4px;
   flex: 1 1 auto;
-  min-height: 0; /* CRITICAL for flex overflow */
+  min-height: 0;
+  min-width: 0;
 }
 
 #map {
@@ -48,6 +49,9 @@ html, body {
   line-height: 1;
   letter-spacing: 0;
   font-variant-ligatures: none;
+
+  min-width: 0;
+  padding: 0;
 }
 
 #side {
