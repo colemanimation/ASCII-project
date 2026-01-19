@@ -1,5 +1,5 @@
 export const CONFIG = {
-  defaultMap: "world_continent",
+  defaultMap: "start_continent",
   defaultSpawn: { x: 14, y: 10, facing: "down" }, // foot tile coords
   useUrlMapOverride: true,
   
