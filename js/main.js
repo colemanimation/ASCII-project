@@ -99,8 +99,9 @@ function computeViewport(preEl, desiredW, desiredH) {
   const fitW = Math.floor(preEl.clientWidth / cw);
   const fitH = Math.floor(preEl.clientHeight / ch);
 
+  const ROW_BUFFER = 2; // stabilizes across Safari/Chrome/Firefox/HomeScreen
   let vw = Math.max(9, fitW);
-  let vh = Math.max(9, fitH);
+  let vh = Math.max(9, fitH - ROW_BUFFER);
 
   if (vw % 2 === 0) vw -= 1;
   if (vh % 2 === 0) vh -= 1;
