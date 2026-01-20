@@ -62,18 +62,35 @@ function tryMove(dir) {
 }
 
 function measureCharSize(preEl) {
-  const probe = document.createElement("span");
-  probe.textContent = "MMMMMMMMMM"; // 10 chars
+  const cs = getComputedStyle(preEl);
+
+  const probe = document.createElement("pre");
   probe.style.visibility = "hidden";
   probe.style.position = "absolute";
+  probe.style.left = "-9999px";
+  probe.style.top = "0";
+  probe.style.margin = "0";
+  probe.style.padding = "0";
+  probe.style.border = "0";
   probe.style.whiteSpace = "pre";
-  probe.style.font = getComputedStyle(preEl).font;
-  document.body.appendChild(probe);
+  probe.style.fontFamily = cs.fontFamily;
+  probe.style.fontSize = cs.fontSize;
+  probe.style.lineHeight = cs.lineHeight;
+  probe.style.letterSpacing = cs.letterSpacing;
+  probe.style.fontVariantLigatures = "none";
 
+  const n = 50;
+  const line = ".".repeat(n);
+  probe.textContent = line + "\n" + line;
+
+  document.body.appendChild(probe);
   const rect = probe.getBoundingClientRect();
   document.body.removeChild(probe);
 
-  return { cw: rect.width / 10, ch: rect.height };
+  return {
+    cw: rect.width / n,
+    ch: rect.height / 2
+  };
 }
 
 function computeViewport(preEl, desiredW, desiredH) {
