@@ -96,6 +96,7 @@ function computeViewport(preEl, desiredW, desiredH) {
 
 function render() {
   const { vw, vh } = computeViewport(els.map, CONFIG.viewWidth, CONFIG.viewHeight);
+  els.dialogue.textContent = `vw=${vw} vh=${vh} px=${els.map.clientWidth}x${els.map.clientHeight}`;
   renderMapToPre(els.map, state.map, state.player, vw, vh);
 }
 
