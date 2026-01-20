@@ -99,9 +99,8 @@ function computeViewport(preEl, desiredW, desiredH) {
   const fitW = Math.floor(preEl.clientWidth / cw);
   const fitH = Math.floor(preEl.clientHeight / ch);
 
-  const ROW_BUFFER = 2; // stabilizes across Safari/Chrome/Firefox/HomeScreen
   let vw = Math.max(9, fitW);
-  let vh = Math.max(9, fitH - ROW_BUFFER);
+  let vh = Math.max(9, fitH);
 
   if (vw % 2 === 0) vw -= 1;
   if (vh % 2 === 0) vh -= 1;
@@ -113,9 +112,25 @@ function computeViewport(preEl, desiredW, desiredH) {
 }
 
 function render() {
-  const { vw, vh } = computeViewport(els.map, CONFIG.viewWidth, CONFIG.viewHeight);
-  els.dialogue.textContent = `vw=${vw} vh=${vh} px=${els.map.clientWidth}x${els.map.clientHeight}`;
-  renderMapToPre(els.map, state.map, state.player, vw, vh);
+  let { vw, vh } = computeViewport(els.map, CONFIG.viewWidth, CONFIG.viewHeight);
+
+  // Try rendering, then shrink only if the last line is clipped.
+  // We cap attempts so we don't loop forever.
+  for (let i = 0; i < 6; i++) {
+    renderMapToPre(els.map, state.map, state.player, vw, vh);
+
+    // If the rendered content is taller than the panel, reduce vh.
+    if (els.map.scrollHeight > els.map.clientHeight + 1) {
+      vh = Math.max(9, vh - 1);
+      if (vh % 2 === 0) vh -= 1;
+      continue;
+    }
+
+    break;
+  }
+
+  // Debug (optional)
+  els.dialogue.textContent = `vw=${vw} vh=${vh} px=${els.map.clientWidth}x${els.map.clientHeight} sh=${els.map.scrollHeight}`;
 }
 
 async function boot() {
