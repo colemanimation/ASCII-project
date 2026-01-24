@@ -3,6 +3,8 @@ import { CONFIG } from "./config.js";
 import { loadMap } from "./world.js";
 import { renderMapToPre, renderTitleToPre } from "./render.js";
 import { bindInput } from "./input.js";
+import { ChipPlayer } from "./music.js";
+import { SONGS } from "./songs.js";
 
 const els = {
   map: document.getElementById("map"),
@@ -10,6 +12,8 @@ const els = {
   portrait: document.getElementById("portrait"),
   inventory: document.getElementById("inventory"),
 };
+
+const chip = new ChipPlayer();
 
 let state = {
   map: null,
@@ -347,7 +351,9 @@ function startTitle() {
 function startGame() {
   state.mode = "game";
   els.dialogue.textContent = "Loaded. Use D-pad.";
-  playOverworldMusic();
+
+  chip.play(SONGS.overworld);
+
   renderOnce();
 }
 
@@ -381,7 +387,8 @@ async function boot() {
   // Show boot overlay and do not render anything until user clicks it
   state.mode = "boot";
   createBootOverlay(async () => {
-    await initAudio();
+    await chip.init();
+    chip.play(SONGS.title);
     startTitle();
   });
 }
