@@ -39,9 +39,10 @@ html, body {
   display: grid;
   grid-template-columns: 1fr 140px; /* instead of 1fr auto */
   gap: 4px;
-  flex: 1 1 auto;
+  flex: 0 0 auto;
   min-height: 0;
   min-width: 0;
+  height: 62svh;
 }
 
 #map {
@@ -70,12 +71,12 @@ html, body {
 }
 
 #dialogue {
-  height: 64px;
+  height: 74px;
   flex: 0 0 auto;
 }
 
 #controls {
-  flex: 0 0 160px; /* GUARANTEED VISIBLE */
+  flex: 0 0 180px; /* GUARANTEED VISIBLE */
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-template-rows: auto auto;
