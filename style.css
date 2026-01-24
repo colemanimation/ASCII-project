@@ -42,7 +42,7 @@ html, body {
   flex: 0 0 auto;
   min-height: 0;
   min-width: 0;
-  height: 58svh;
+  height: 52svh;
 }
 
 #map {
@@ -71,7 +71,7 @@ html, body {
 }
 
 #dialogue {
-  height: 74px;
+  height: 84px;
   flex: 0 0 auto;
 }
 
