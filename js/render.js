@@ -159,5 +159,98 @@ export function renderTitleToPre(preEl, titleState, viewW, viewH) {
     .join("\n");
 }
 
+// Add these to TILE_COLOR near the top (optional but helps)
+const TILE_COLOR = {
+  "#": "#8a8a8a",
+  ".": "#bdbdbd",
+  "~": "#7f93a8",
+  "T": "#7f9a7f",
+  "^": "#9a8f7f",
+  "+": "#bfc7d1",
+  "*": "#cfcfcf",
+  "·": "#9aa3ad",
+  "█": "#cfcfcf",
+  " ": "#000000"
+};
+
+// ---- Title screen rendering ----
+
+function blankGrid(vw, vh, fillChar = " ") {
+  return Array.from({ length: vh }, () => Array.from({ length: vw }, () => fillChar));
+}
+
+// Small deterministic RNG (so stars do not “jump” wildly across browsers)
+function mulberry32(seed) {
+  let a = seed >>> 0;
+  return function () {
+    a |= 0;
+    a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function drawClippedText(grid, x0, y0, lines, glyphHtml) {
+  const vh = grid.length;
+  const vw = grid[0].length;
+  for (let y = 0; y < lines.length; y++) {
+    const yy = y0 + y;
+    if (yy < 0 || yy >= vh) continue;
+    const line = lines[y];
+    for (let x = 0; x < line.length; x++) {
+      const xx = x0 + x;
+      if (xx < 0 || xx >= vw) continue;
+      const ch = line[x];
+      if (ch === " ") continue;
+
+      // If you want pure “ASCII tile” style, you can store chars instead of HTML.
+      // Here we store HTML for logo so it stays bright white and readable.
+      grid[yy][xx] = glyphHtml(ch);
+    }
+  }
+}
+
+export function renderTitleToPre(preEl, vw, vh, t, seed, logoLines, logoX, logoY) {
+  // grid is HTML strings, like renderMapToPre uses
+  const grid = blankGrid(vw, vh, tileSpan(" "));
+
+  // Stars background
+  const rand = mulberry32(seed);
+  const starCount = Math.floor((vw * vh) * 0.08);
+
+  for (let i = 0; i < starCount; i++) {
+    const x = Math.floor(rand() * vw);
+    const y = Math.floor(rand() * vh);
+
+    // twinkle varies with time + position
+    const tw = (Math.sin(t * 2.3 + x * 0.7 + y * 1.1) + 1) / 2;
+    const ch = tw > 0.82 ? "*" : tw > 0.6 ? "·" : ".";
+    grid[y][x] = tileSpan(ch);
+  }
+
+  // Occasional shooting star (diagonal streak)
+  // One streak every ~3 seconds, lasts ~0.6 seconds
+  const period = 3.0;
+  const local = t % period;
+  if (local < 0.6) {
+    const p = local / 0.6; // 0..1
+    const sx = Math.floor((vw + 10) * p) - 10;
+    const sy = Math.floor((vh * 0.25) * p);
+
+    for (let k = 0; k < 10; k++) {
+      const x = sx + k;
+      const y = sy + Math.floor(k / 2);
+      if (x >= 0 && x < vw && y >= 0 && y < vh) grid[y][x] = tileSpan("*");
+    }
+  }
+
+  // Logo scroll (left -> right)
+  const logoHtml = (ch) => `<span style="color:#cfcfcf">${escHtml(ch)}</span>`;
+  drawClippedText(grid, logoX, logoY, logoLines, logoHtml);
+
+  preEl.innerHTML = grid.map(row => row.join("")).join("\n");
+}
+
   preEl.innerHTML = htmlGrid.map(row => row.join("")).join("\n");
 }
