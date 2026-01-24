@@ -42,7 +42,7 @@ html, body {
   flex: 0 0 auto;
   min-height: 0;
   min-width: 0;
-  height: 62svh;
+  height: 58svh;
 }
 
 #map {
@@ -76,7 +76,7 @@ html, body {
 }
 
 #controls {
-  flex: 0 0 180px; /* GUARANTEED VISIBLE */
+  flex: 0 0 200px; /* GUARANTEED VISIBLE */
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-template-rows: auto auto;
