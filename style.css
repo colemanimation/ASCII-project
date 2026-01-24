@@ -18,8 +18,11 @@ html, body {
   display: flex;
   flex-direction: column;
   height: 100dvh;
-  height: 100svh;
-  padding: 4px;
+  height: 100svh; /* fallback */
+  padding: calc(4px + env(safe-area-inset-top))
+           calc(4px + env(safe-area-inset-right))
+           calc(4px + env(safe-area-inset-bottom))
+           calc(4px + env(safe-area-inset-left));
   gap: 4px;
 }
 
