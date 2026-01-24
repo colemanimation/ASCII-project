@@ -76,7 +76,7 @@ html, body {
 }
 
 #controls {
-  flex: 0 0 200px; /* GUARANTEED VISIBLE */
+  flex: 0 0 240px; /* GUARANTEED VISIBLE */
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-template-rows: auto auto;
