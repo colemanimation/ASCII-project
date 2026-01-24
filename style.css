@@ -17,6 +17,7 @@ html, body {
 #app {
   display: flex;
   flex-direction: column;
+  height: 100dvh;
   height: 100svh;
   padding: 4px;
   gap: 4px;
@@ -42,6 +43,7 @@ html, body {
   flex: 0 0 auto;
   min-height: 0;
   min-width: 0;
+  height: 52dvh;
   height: 52svh;
 }
 
