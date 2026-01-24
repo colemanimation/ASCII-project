@@ -133,65 +133,42 @@ function render() {
   els.dialogue.textContent = `vw=${vw} vh=${vh} px=${els.map.clientWidth}x${els.map.clientHeight} sh=${els.map.scrollHeight}`;
 }
 
-export function renderTitleToPre(preEl, titleState, viewW, viewH) {
-  const vw = viewW;
-  const vh = viewH;
+function makeTitleState(vw, vh) {
+  const bannerLines = [
+`██████╗ ██╗   ██╗███████╗██╗  ██╗██╗    ██╗ █████╗ ████████╗ ██████╗██╗  ██╗`,
+`██╔══██╗██║   ██║██╔════╝██║ ██╔╝██║    ██║██╔══██╗╚══██╔══╝██╔════╝██║  ██║`,
+`██║  ██║██║   ██║███████╗█████╔╝ ██║ █╗ ██║███████║   ██║   ██║     ███████║`,
+`██║  ██║██║   ██║╚════██║██╔═██╗ ██║███╗██║██╔══██║   ██║   ██║     ██╔══██║`,
+`██████╔╝╚██████╔╝███████║██║  ██╗╚███╔███╔╝██║  ██║   ██║   ╚██████╗██║  ██║`,
+`╚═════╝  ╚═════╝ ╚══════╝╚═╝  ╚═╝ ╚══╝╚══╝ ╚═╝  ╚═╝   ╚═╝    ╚═════╝╚═╝  ╚═╝`,
+  ];
 
-  // cellGrid[y][x] = { ch, color }
-  const cellGrid = Array.from({ length: vh }, () =>
-    Array.from({ length: vw }, () => ({ ch: " ", color: "#000000" }))
-  );
+  const bannerW = Math.max(...bannerLines.map(l => l.length));
 
-  // Stars (simple sparkle)
-  for (const s of titleState.stars) {
-    const tw = ((titleState.frame + s.phase) % s.period) < (s.period / 2);
-    const ch = tw ? s.ch1 : s.ch2;
-    const color = tw ? "#cfcfcf" : "#7a7a7a";
-    if (s.x >= 0 && s.x < vw && s.y >= 0 && s.y < vh) cellGrid[s.y][s.x] = { ch, color };
-  }
+  // Stars
+  const starCount = Math.floor((vw * vh) / 18);
+  const stars = Array.from({ length: starCount }, () => {
+    const pairs = [[ ".", "·" ], [ "*", "+" ], [ "·", " " ]];
+    const p = pairs[Math.floor(Math.random() * pairs.length)];
+    return {
+      x: Math.floor(Math.random() * vw),
+      y: Math.floor(Math.random() * vh),
+      ch1: p[0],
+      ch2: p[1],
+      phase: Math.floor(Math.random() * 30),
+      period: 18 + Math.floor(Math.random() * 30),
+    };
+  });
 
-  // Shooting stars (optional)
-  for (const sh of titleState.shooters) {
-    for (let i = 0; i < sh.len; i++) {
-      const x = Math.round(sh.x - i * sh.dx);
-      const y = Math.round(sh.y - i * sh.dy);
-      if (x >= 0 && x < vw && y >= 0 && y < vh) {
-        cellGrid[y][x] = { ch: i === 0 ? "✦" : "·", color: "#ffffff" };
-      }
-    }
-  }
-
-  // --- SCROLLING BANNER ---
-  const bannerLines = titleState.bannerLines;
-  const bannerW = titleState.bannerW;
-  const bannerH = bannerLines.length;
-
-  // Center vertically, but you can set this wherever you want
-  const bannerY = Math.max(0, Math.floor((vh - bannerH) / 2));
-
-  // Draw clipped banner at current X
-  drawBannerClipped(cellGrid, bannerLines, Math.floor(titleState.bannerX), bannerY, "#ffffff");
-
-  // "Press Start" prompt
-  const prompt = "Press Start";
-  const py = vh - 3;
-  const px = Math.max(0, Math.floor((vw - prompt.length) / 2));
-  if (py >= 0 && py < vh) {
-    for (let i = 0; i < prompt.length; i++) {
-      const x = px + i;
-      if (x >= 0 && x < vw) cellGrid[py][x] = { ch: prompt[i], color: "#cfcfcf" };
-    }
-  }
-
-  // Emit HTML
-  function spanChar(ch, color) {
-    const safe = ch === " " ? "&nbsp;" : escHtml(ch);
-    return `<span style="color:${color}">${safe}</span>`;
-  }
-
-  preEl.innerHTML = cellGrid
-    .map(row => row.map(cell => spanChar(cell.ch, cell.color)).join(""))
-    .join("\n");
+  return {
+    frame: 0,
+    stars,
+    shooters: [],
+    bannerLines,
+    bannerW,
+    bannerX: -bannerW,     // start fully offscreen to the left
+    bannerSpeed: 0.35,     // tweak to taste
+  };
 }
 
 async function boot() {
@@ -214,6 +191,42 @@ async function boot() {
     onSelect: () => { els.dialogue.textContent = "Select pressed"; },
   });
 }
+
+function updateTitleState(ts, vw, vh) {
+  ts.frame++;
+
+  // Move banner left-to-right
+  ts.bannerX += ts.bannerSpeed;
+
+  // Once banner fully exits right, reset to left
+  if (ts.bannerX > vw) {
+    ts.bannerX = -ts.bannerW;
+  }
+
+  // Optional: shooting star spawn and update
+  if (ts.shooters.length < 2 && Math.random() < 0.025) {
+    ts.shooters.push({
+      x: Math.floor(Math.random() * vw * 0.6),
+      y: Math.floor(Math.random() * vh * 0.4),
+      dx: 1,
+      dy: 1,
+      len: 7 + Math.floor(Math.random() * 6),
+      life: 14 + Math.floor(Math.random() * 10),
+    });
+  }
+  ts.shooters = ts.shooters
+    .map(s => ({ ...s, x: s.x + 1.2, y: s.y + 1.0, life: s.life - 1 }))
+    .filter(s => s.life > 0);
+}
+
+const { vw, vh } = computeViewport(els.map, CONFIG.viewWidth, CONFIG.viewHeight);
+
+if (!state.title || state.title.bannerW == null) {
+  state.title = makeTitleState(vw, vh);
+}
+
+updateTitleState(state.title, vw, vh);
+renderTitleToPre(els.map, state.title, vw, vh);
 
 boot().catch(err => {
   els.dialogue.textContent = String(err);
