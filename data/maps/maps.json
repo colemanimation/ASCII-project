@@ -1,0 +1,24 @@
+{
+  "maps": [
+    {
+      "id": "test_continent",
+      "file": "test_continent.txt",
+      "name": "Test Continent (Original)"
+    },
+    {
+      "id": "test_continent_wide",
+      "file": "test_continent_wide.txt",
+      "name": "Test Continent (Wide)"
+    },
+    {
+      "id": "test_continent_rivers",
+      "file": "test_continent_wide_rivers.txt",
+      "name": "Test Continent (Wide + Rivers)"
+    },
+    {
+      "id": "world_continent",
+      "file": "world_continent.txt",
+      "name": "World Continent (old)"
+    }
+  ]
+}
