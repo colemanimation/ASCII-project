@@ -138,14 +138,42 @@ function draw() {
 }
 
 // -------------------- Loading maps --------------------
+async function loadManifest() {
+  const res = await fetch("../data/maps/maps.json", { cache: "no-store" });
+  if (!res.ok) throw new Error("Could not load maps.json");
+  const data = await res.json();
+  return data.maps;
+}
 
-async function loadFromQueryParam() {
+async function loadInitialMap() {
   const params = new URLSearchParams(location.search);
-  const name = params.get("map");
-  if (!name) return false;
+  const requested = params.get("map");
 
+  const maps = await loadManifest();
+
+  // If URL explicitly requests a map, use it
+  if (requested) {
+    const m = maps.find(x => x.file === requested);
+    if (!m) throw new Error(`Map not found in manifest: ${requested}`);
+
+    const res = await fetch(`../data/maps/${m.file}`, { cache: "no-store" });
+    if (!res.ok) throw new Error(`Could not fetch ${m.file}`);
+    parseMapText(await res.text());
+    fitToScreen();
+    return;
+  }
+
+  // Otherwise load first map in manifest
+  if (!maps.length) throw new Error("No maps listed in maps.json");
+
+  const first = maps[0];
+  const res = await fetch(`../data/maps/${first.file}`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`Could not fetch ${first.file}`);
+  parseMapText(await res.text());
+  fitToScreen();
+}
   // same folder as HTML by default. If your maps are in /maps/, use `./maps/${name}`
-  const url = `./${name}`;
+  const url = `../data/maps/${name}`;
 
   labelEl.textContent = `Loading ${name}…`;
   const res = await fetch(url, { cache: "no-store" });
@@ -253,7 +281,7 @@ canvas.addEventListener("pointercancel", (ev) => {
 
 window.addEventListener("resize", resize);
 
-await loadFromQueryParam().catch(err => {
+await loadInitialMap().catch(err => {
   labelEl.textContent = String(err);
 });
 resize();
