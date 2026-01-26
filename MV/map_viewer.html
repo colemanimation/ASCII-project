@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+  <title>ASCII Map Viewer</title>
+  <link rel="stylesheet" href="./map_viewer.css" />
+</head>
+<body>
+  <div id="ui">
+    <div id="left">
+      <button id="btnOut" aria-label="Zoom out">−</button>
+      <button id="btnIn" aria-label="Zoom in">+</button>
+      <button id="btnFit" aria-label="Fit to screen">Fit</button>
+    </div>
+
+    <div id="center">
+      <div id="label">Loading…</div>
+    </div>
+
+    <div id="right">
+      <label class="fileBtn">
+        Open…
+        <input id="fileInput" type="file" accept=".txt,.map,text/plain" />
+      </label>
+    </div>
+  </div>
+
+  <canvas id="c"></canvas>
+
+  <script type="module" src="./map_viewer.js"></script>
+</body>
+</html>
