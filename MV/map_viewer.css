@@ -1,0 +1,88 @@
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: #000;
+  color: #fff;
+  overflow: hidden;
+  touch-action: none; /* we handle pan/pinch ourselves */
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+#ui {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding:
+    calc(6px + env(safe-area-inset-top))
+    calc(6px + env(safe-area-inset-right))
+    6px
+    calc(6px + env(safe-area-inset-left));
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 8px;
+  z-index: 10;
+  background: rgba(0,0,0,0.85);
+  border-bottom: 2px double #fff;
+}
+
+#left, #right {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+#center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+}
+
+#label {
+  font-size: 12px;
+  opacity: 0.9;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 60vw;
+}
+
+button, .fileBtn {
+  background: #000;
+  color: #fff;
+  border: 2px double #fff;
+  padding: 8px 10px;
+  min-width: 44px;
+  min-height: 44px;
+  font-size: 14px;
+}
+
+button:active, .fileBtn:active {
+  background: #fff;
+  color: #000;
+}
+
+.fileBtn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.fileBtn input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+canvas#c {
+  position: fixed;
+  left: 0;
+  top: 0;
+}
