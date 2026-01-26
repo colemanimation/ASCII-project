@@ -24,7 +24,8 @@ const TILE_COLOR = {
   "·": "#9aa3ad",
   "█": "#cfcfcf",
   " ": "#000000",
-  "≈": "#5e8cb8",
+  "≈": "#6f849a",
+  "=": "#d0d0d0",
 };
 
 function tileSpan(ch) {
