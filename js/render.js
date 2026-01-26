@@ -5,9 +5,9 @@ function escHtml(s) {
 }
 
 const DISPLAY_GLYPH = {
-  "≈": "~",   // deep water displays as ~
-  "¥": "Y",   // forest alt displays as Y
-  "▲": "#",   // mountains display as #
+  "≈": "≈",   // deep water displays as ≈
+  "¥": "¥",   // forest alt displays as ¥
+  "▲": "▲",   // mountains display as ▲
   "‘": "'",   // curly quote snow -> ascii apostrophe
   "’": "'",   // just in case
 };
@@ -24,6 +24,7 @@ const TILE_COLOR = {
   "·": "#9aa3ad",
   "█": "#cfcfcf",
   " ": "#000000",
+  "≈": "#425da2",
 };
 
 function tileSpan(ch) {
