@@ -139,9 +139,11 @@ function draw() {
 
 // -------------------- Loading maps --------------------
 async function loadManifest() {
-  const res = await fetch("../data/maps/maps.json", { cache: "no-store" });
-  if (!res.ok) throw new Error("Could not load maps.json");
+  const manifestUrl = new URL("../data/maps/maps.json", import.meta.url);
+  const res = await fetch(manifestUrl, { cache: "no-store" });
+  if (!res.ok) throw new Error(`Could not load maps.json (${res.status}) at ${manifestUrl}`);
   const data = await res.json();
+  if (!data || !Array.isArray(data.maps)) throw new Error("maps.json missing { maps: [...] }");
   return data.maps;
 }
 
@@ -156,7 +158,8 @@ async function loadInitialMap() {
     const m = maps.find(x => x.file === requested);
     if (!m) throw new Error(`Map not found in manifest: ${requested}`);
 
-    const res = await fetch(`../data/maps/${m.file}`, { cache: "no-store" });
+    const mapUrl = new URL(`../data/maps/${m.file}`, import.meta.url);
+    const res = await fetch(mapUrl, { cache: "no-store" });
     if (!res.ok) throw new Error(`Could not fetch ${m.file}`);
     parseMapText(await res.text());
     fitToScreen();
@@ -167,21 +170,11 @@ async function loadInitialMap() {
   if (!maps.length) throw new Error("No maps listed in maps.json");
 
   const first = maps[0];
-  const res = await fetch(`../data/maps/${first.file}`, { cache: "no-store" });
+  const mapUrl = new URL(`../data/maps/${first.file}`, import.meta.url);
+  const res = await fetch(mapUrl, ...)
   if (!res.ok) throw new Error(`Could not fetch ${first.file}`);
   parseMapText(await res.text());
   fitToScreen();
-}
-  // same folder as HTML by default. If your maps are in /maps/, use `./maps/${name}`
-  const url = `../data/maps/${name}`;
-
-  labelEl.textContent = `Loading ${name}…`;
-  const res = await fetch(url, { cache: "no-store" });
-  if (!res.ok) throw new Error(`Could not fetch ${url} (${res.status})`);
-  const text = await res.text();
-  parseMapText(text);
-  fitToScreen();
-  return true;
 }
 
 fileInput.addEventListener("change", async (e) => {
@@ -281,7 +274,15 @@ canvas.addEventListener("pointercancel", (ev) => {
 
 window.addEventListener("resize", resize);
 
-await loadInitialMap().catch(err => {
-  labelEl.textContent = String(err);
-});
-resize();
+(function boot() {
+  try {
+    resize();
+    loadInitialMap()
+      .then(() => draw())
+      .catch(err => {
+        labelEl.textContent = String(err);
+      });
+  } catch (err) {
+    labelEl.textContent = String(err);
+  }
+})();
