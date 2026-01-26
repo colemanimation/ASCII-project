@@ -218,7 +218,7 @@ function getStartMapName() {
 }
 
 function isBlocked(ch) {
-  return ch === "#" || ch === "T" || ch === "~";
+  return ch === "#" || ch === "T" || ch === "≈";
 }
 
 function tryMove(dir) {
