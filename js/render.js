@@ -15,7 +15,7 @@ const DISPLAY_GLYPH = {
 // Muted palette
 const TILE_COLOR = {
   "#": "#8a8a8a",
-  ".": "#bdbdbd",
+  ".": "#63cd83",
   "~": "#7f93a8",
   "T": "#7f9a7f",
   "^": "#9a8f7f",
