@@ -171,7 +171,7 @@ async function loadInitialMap() {
 
   const first = maps[0];
   const mapUrl = new URL(`../data/maps/${first.file}`, import.meta.url);
-  const res = await fetch(mapUrl, ...)
+  const res = await fetch(mapUrl, { cache: "no-store" });
   if (!res.ok) throw new Error(`Could not fetch ${first.file}`);
   parseMapText(await res.text());
   fitToScreen();
