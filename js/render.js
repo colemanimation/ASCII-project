@@ -15,7 +15,7 @@ const DISPLAY_GLYPH = {
 // Muted palette
 const TILE_COLOR = {
   "#": "#8a8a8a",
-  ".": "#63cd83",
+  ".": "#9bb891",
   "~": "#7f93a8",
   "T": "#7f9a7f",
   "^": "#9a8f7f",
@@ -24,7 +24,7 @@ const TILE_COLOR = {
   "·": "#9aa3ad",
   "█": "#cfcfcf",
   " ": "#000000",
-  "≈": "#425da2",
+  "≈": "#5e8cb8",
 };
 
 function tileSpan(ch) {
