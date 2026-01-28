@@ -44,15 +44,15 @@
   </div>
 
   <!-- Clipboard fallback (iOS can block clipboard) -->
-  <div id="copyModal" hidden>
-    <div id="copyModalInner">
-      <div class="copyTitle">Copy map text</div>
-      <textarea id="copyText" readonly></textarea>
-      <div class="copyBtns">
-        <button id="btnCloseCopy">Close</button>
-      </div>
+  <div id="copyModal">
+  <div id="copyModalInner">
+    <div class="copyTitle">Copy map text</div>
+    <textarea id="copyText"></textarea>
+    <div class="copyBtns">
+      <button id="copyClose">Close</button>
     </div>
   </div>
+</div>
 
   <script type="module" src="./map_viewer.js"></script>
 </body>
