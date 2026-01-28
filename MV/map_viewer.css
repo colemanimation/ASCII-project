@@ -86,3 +86,108 @@ canvas#c {
   left: 0;
   top: 0;
 }
+
+/* ---------- Editor Bar (bottom) ---------- */
+
+#editBar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding:
+    6px
+    calc(6px + env(safe-area-inset-right))
+    calc(6px + env(safe-area-inset-bottom))
+    calc(6px + env(safe-area-inset-left));
+  z-index: 12;
+  background: rgba(0,0,0,0.9);
+  border-top: 2px double #fff;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 8px;
+  align-items: center;
+}
+
+#editLeft, #editRight {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+#brushRow {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 2px 0;
+  -webkit-overflow-scrolling: touch;
+}
+
+.brushBtn {
+  min-width: 38px;
+  min-height: 38px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px double #fff;
+  background: #000;
+  color: #fff;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.brushBtn.active {
+  background: #fff;
+  color: #000;
+}
+
+#brushLabel {
+  font-size: 12px;
+  opacity: 0.9;
+  white-space: nowrap;
+}
+
+/* ---------- Copy modal fallback ---------- */
+
+#copyModal {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(0,0,0,0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+}
+
+#copyModalInner {
+  width: min(720px, 96vw);
+  background: #000;
+  border: 2px double #fff;
+  padding: 10px;
+  display: grid;
+  gap: 8px;
+}
+
+.copyTitle {
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+#copyText {
+  width: 100%;
+  height: min(60vh, 420px);
+  background: #000;
+  color: #fff;
+  border: 2px double #fff;
+  padding: 8px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  line-height: 14px;
+}
+
+.copyBtns {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
