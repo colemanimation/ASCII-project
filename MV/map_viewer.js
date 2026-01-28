@@ -15,7 +15,16 @@ const brushLabel = document.getElementById("brushLabel");
 
 const copyModal = document.getElementById("copyModal");
 const copyText = document.getElementById("copyText");
-const btnCloseCopy = document.getElementById("btnCloseCopy");
+const copyClose = document.getElementById("copyClose");
+
+function openCopyModal() {
+  copyText.value = mapLines.join("\n");
+  copyModal.classList.add("open");
+}
+
+function closeCopyModal() {
+  copyModal.classList.remove("open");
+}
 
 let mapLines = [];
 let mapW = 0;
@@ -262,11 +271,13 @@ btnMode.addEventListener("click", () => {
 
 btnUndo.addEventListener("click", () => undo());
 
-btnCopy.addEventListener("click", () => exportToClipboard());
+btnCopy.addEventListener("click", openCopyModal);
 
 btnCloseCopy.addEventListener("click", () => {
   copyModal.hidden = true;
 });
+
+copyClose.addEventListener("click", closeCopyModal);
 
 buildBrushRow();
 
