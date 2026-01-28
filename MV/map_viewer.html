@@ -27,6 +27,32 @@
   </div>
 
   <canvas id="c"></canvas>
+  
+    <!-- Bottom editor toolbar -->
+  <div id="editBar">
+    <div id="editLeft">
+      <button id="btnMode" title="Toggle paint/pan">Paint</button>
+      <button id="btnUndo" title="Undo">Undo</button>
+      <button id="btnCopy" title="Copy map to clipboard">Copy</button>
+    </div>
+
+    <div id="brushRow" aria-label="Brush palette"></div>
+
+    <div id="editRight">
+      <span id="brushLabel">Brush: .</span>
+    </div>
+  </div>
+
+  <!-- Clipboard fallback (iOS can block clipboard) -->
+  <div id="copyModal" hidden>
+    <div id="copyModalInner">
+      <div class="copyTitle">Copy map text</div>
+      <textarea id="copyText" readonly></textarea>
+      <div class="copyBtns">
+        <button id="btnCloseCopy">Close</button>
+      </div>
+    </div>
+  </div>
 
   <script type="module" src="./map_viewer.js"></script>
 </body>
