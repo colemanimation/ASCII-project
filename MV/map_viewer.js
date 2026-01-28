@@ -1,44 +1,41 @@
+// ASCII Map Viewer
+// - Pan: drag
+// - Pinch: zoom
+// - Zoom buttons: +/-
+// - Fit: fit map into view
+// - Paint mode: tap/drag to place a tile character
+// - Undo: revert last paint stroke
+// - Copy: opens modal with full map text + copy-to-clipboard
+
 const canvas = document.getElementById("c");
 const ctx = canvas.getContext("2d", { alpha: false });
 
+// Top UI
 const labelEl = document.getElementById("label");
 const btnIn = document.getElementById("btnIn");
 const btnOut = document.getElementById("btnOut");
 const btnFit = document.getElementById("btnFit");
 const fileInput = document.getElementById("fileInput");
 
-const brushRow = document.getElementById("brushRow");
+// Bottom edit bar
+const editBar = document.getElementById("editBar");
 const btnMode = document.getElementById("btnMode");
 const btnUndo = document.getElementById("btnUndo");
 const btnCopy = document.getElementById("btnCopy");
 const brushLabel = document.getElementById("brushLabel");
 
+// Copy modal
 const copyModal = document.getElementById("copyModal");
 const copyText = document.getElementById("copyText");
 const copyClose = document.getElementById("copyClose");
-
-function openCopyModal() {
-  copyText.value = mapLines.join("\n");
-  copyModal.classList.add("open");
-}
-
-function closeCopyModal() {
-  copyModal.classList.remove("open");
-}
 
 let mapLines = [];
 let mapW = 0;
 let mapH = 0;
 
-let grid = [];          // 2D array of chars: grid[y][x]
-let currentBrush = "."; // active paint brush
-let editMode = "paint"; // "paint" or "pan"
-let undoStack = [];     // list of {x,y,prev,next}
-const UNDO_MAX = 5000;
-
 let camX = 0; // in tile units, top-left of view
 let camY = 0;
-let zoom = 16; // pixels per tile (we will clamp)
+let zoom = 16; // pixels per tile
 
 const ZOOM_MIN = 6;
 const ZOOM_MAX = 40;
@@ -59,6 +56,10 @@ const PALETTE = {
   " ": "#000000",
 };
 
+function clamp(n, lo, hi) {
+  return Math.max(lo, Math.min(hi, n));
+}
+
 // Use a stable monospace font
 function setFont(px) {
   ctx.font = `${px}px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace`;
@@ -67,19 +68,36 @@ function setFont(px) {
 
 function resize() {
   const uiH = document.getElementById("ui").getBoundingClientRect().height;
-  canvas.width = Math.floor(window.innerWidth * devicePixelRatio);
-  canvas.height = Math.floor((window.innerHeight - uiH) * devicePixelRatio);
+  const editH = editBar.getBoundingClientRect().height;
 
-  canvas.style.width = `${window.innerWidth}px`;
-  canvas.style.height = `${window.innerHeight - uiH}px`;
+  const viewW = window.innerWidth;
+  const viewH = window.innerHeight - uiH - editH;
+
+  // Set the canvas CSS box (what you see)
+  canvas.style.position = "fixed";
+  canvas.style.left = "0";
   canvas.style.top = `${uiH}px`;
+  canvas.style.width = `${viewW}px`;
+  canvas.style.height = `${viewH}px`;
 
+  // Set the canvas backing store (for crisp text on retina)
+  canvas.width = Math.floor(viewW * devicePixelRatio);
+  canvas.height = Math.floor(viewH * devicePixelRatio);
+
+  // Make drawing use CSS pixels
   ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+
   draw();
 }
 
-function clamp(n, lo, hi) {
-  return Math.max(lo, Math.min(hi, n));
+function tilesVisible() {
+  const viewW = canvas.clientWidth;
+  const viewH = canvas.clientHeight;
+
+  const tilesAcross = Math.ceil(viewW / zoom) + 2;
+  const tilesDown = Math.ceil(viewH / zoom) + 2;
+
+  return { viewW, viewH, tilesAcross, tilesDown };
 }
 
 function parseMapText(text) {
@@ -89,73 +107,58 @@ function parseMapText(text) {
   mapH = lines.length;
   mapW = lines.reduce((m, s) => Math.max(m, s.length), 0);
 
-  // Pad and store
   mapLines = lines.map(s => s.padEnd(mapW, " "));
-
-  // Editable grid
-  grid = mapLines.map(line => Array.from(line));
-
   labelEl.textContent = `Loaded map: ${mapW}×${mapH}`;
-  undoStack = [];
 }
 
 function fitToScreen() {
   if (!mapW || !mapH) return;
 
-  const viewWpx = window.innerWidth;
-  const uiH = document.getElementById("ui").getBoundingClientRect().height;
-  const viewHpx = window.innerHeight - uiH;
+  const viewW = canvas.clientWidth;
+  const viewH = canvas.clientHeight;
 
-  const zX = Math.floor(viewWpx / mapW);
-  const zY = Math.floor(viewHpx / mapH);
+  const zX = Math.floor(viewW / mapW);
+  const zY = Math.floor(viewH / mapH);
   zoom = clamp(Math.min(zX, zY), ZOOM_MIN, ZOOM_MAX);
 
-  camX = 0;
-  camY = 0;
+  // Center the camera on the map (helps when clamp prevents full fit)
+  const { tilesAcross, tilesDown } = tilesVisible();
+  camX = (mapW - tilesAcross) / 2;
+  camY = (mapH - tilesDown) / 2;
+
   draw();
 }
 
 function draw() {
+  const { viewW, viewH, tilesAcross, tilesDown } = tilesVisible();
+
+  ctx.fillStyle = "#000";
+  ctx.fillRect(0, 0, viewW, viewH);
+
   if (!mapW || !mapH) {
-    ctx.fillStyle = "#000";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    labelEl.textContent = "Load a map…";
     return;
   }
-
-  const uiH = document.getElementById("ui").getBoundingClientRect().height;
-  const viewW = window.innerWidth;
-  const viewH = window.innerHeight - uiH;
-
-  // tiles visible (+ a small buffer)
-  const tilesAcross = Math.ceil(viewW / zoom) + 2;
-  const tilesDown = Math.ceil(viewH / zoom) + 2;
 
   // clamp camera
   camX = clamp(camX, 0, Math.max(0, mapW - tilesAcross));
   camY = clamp(camY, 0, Math.max(0, mapH - tilesDown));
 
-  ctx.fillStyle = "#000";
-  ctx.fillRect(0, 0, viewW, viewH);
-
   setFont(zoom);
 
-  // draw as colored characters
   for (let y = 0; y < tilesDown; y++) {
     const my = Math.floor(camY + y);
     if (my < 0 || my >= mapH) continue;
 
-    const row = grid[my];
+    const row = mapLines[my];
     for (let x = 0; x < tilesAcross; x++) {
       const mx = Math.floor(camX + x);
       if (mx < 0 || mx >= mapW) continue;
 
       const ch = row[mx] || " ";
-      const color = PALETTE[ch] || "#cfcfcf";
-
-      // Skip drawing pure black spaces to speed it up a bit
       if (ch === " ") continue;
 
-      ctx.fillStyle = color;
+      ctx.fillStyle = PALETTE[ch] || "#cfcfcf";
       ctx.fillText(ch, x * zoom, y * zoom);
     }
   }
@@ -163,45 +166,7 @@ function draw() {
   labelEl.textContent = `${mapW}×${mapH}  zoom=${zoom}px  cam=(${camX.toFixed(1)},${camY.toFixed(1)})`;
 }
 
-// -------------------- Loading maps --------------------
-async function loadManifest() {
-  const manifestUrl = new URL("../data/maps/maps.json", import.meta.url);
-  const res = await fetch(manifestUrl, { cache: "no-store" });
-  if (!res.ok) throw new Error(`Could not load maps.json (${res.status}) at ${manifestUrl}`);
-  const data = await res.json();
-  if (!data || !Array.isArray(data.maps)) throw new Error("maps.json missing { maps: [...] }");
-  return data.maps;
-}
-
-async function loadInitialMap() {
-  const params = new URLSearchParams(location.search);
-  const requested = params.get("map");
-
-  const maps = await loadManifest();
-
-  // If URL explicitly requests a map, use it
-  if (requested) {
-    const m = maps.find(x => x.file === requested);
-    if (!m) throw new Error(`Map not found in manifest: ${requested}`);
-
-    const mapUrl = new URL(`../data/maps/${m.file}`, import.meta.url);
-    const res = await fetch(mapUrl, { cache: "no-store" });
-    if (!res.ok) throw new Error(`Could not fetch ${m.file}`);
-    parseMapText(await res.text());
-    fitToScreen();
-    return;
-  }
-
-  // Otherwise load first map in manifest
-  if (!maps.length) throw new Error("No maps listed in maps.json");
-
-  const first = maps[0];
-  const mapUrl = new URL(`../data/maps/${first.file}`, import.meta.url);
-  const res = await fetch(mapUrl, { cache: "no-store" });
-  if (!res.ok) throw new Error(`Could not fetch ${first.file}`);
-  parseMapText(await res.text());
-  fitToScreen();
-}
+// -------------------- Loading (file upload) --------------------
 
 fileInput.addEventListener("change", async (e) => {
   const f = e.target.files?.[0];
@@ -226,123 +191,101 @@ btnFit.addEventListener("click", () => {
   fitToScreen();
 });
 
-// -------------------- Editor UI --------------------
+// -------------------- Stage 1 Editing --------------------
 
-const BRUSHES = [
-  ".", ",", "#", "T", "Y",
-  "~", "≈", "=", "+", "'", "^", ";", " "
-];
+let paintMode = false;
+let brushChar = ".";
+brushLabel.textContent = brushChar;
 
-function brushDisplay(ch) {
-  return ch === " " ? "␠" : ch;
-}
-
-function setBrush(ch) {
-  currentBrush = ch;
-  brushLabel.textContent = `Brush: ${brushDisplay(ch)}`;
-  for (const b of brushRow.querySelectorAll(".brushBtn")) {
-    b.classList.toggle("active", b.dataset.ch === ch);
-  }
-}
-
-function buildBrushRow() {
-  brushRow.innerHTML = "";
-  for (const ch of BRUSHES) {
-    const btn = document.createElement("button");
-    btn.className = "brushBtn";
-    btn.type = "button";
-    btn.dataset.ch = ch;
-    btn.textContent = brushDisplay(ch);
-
-    // color hint (optional)
-    const color = PALETTE[ch] || "#cfcfcf";
-    if (ch !== " ") btn.style.color = color;
-
-    btn.addEventListener("click", () => setBrush(ch));
-    brushRow.appendChild(btn);
-  }
-  setBrush(currentBrush);
+const BRUSHES = [".", ",", "~", "≈", "#", "T", "Y", "+", "^", ";", "=", " "];
+const brushRow = document.getElementById("brushRow");
+brushRow.innerHTML = "";
+for (const ch of BRUSHES) {
+  const b = document.createElement("button");
+  b.type = "button";
+  b.textContent = ch === " " ? "␠" : ch;
+  b.title = ch === " " ? "Space" : ch;
+  b.addEventListener("click", () => {
+    brushChar = ch;
+    brushLabel.textContent = ch === " " ? "␠" : ch;
+  });
+  brushRow.appendChild(b);
 }
 
 btnMode.addEventListener("click", () => {
-  editMode = (editMode === "paint") ? "pan" : "paint";
-  btnMode.textContent = (editMode === "paint") ? "Paint" : "Pan";
+  paintMode = !paintMode;
+  btnMode.textContent = paintMode ? "Pan" : "Paint";
 });
 
-btnUndo.addEventListener("click", () => undo());
+const undoStack = [];
+let currentStroke = null;
 
-btnCopy.addEventListener("click", openCopyModal);
+function beginStroke() {
+  currentStroke = [];
+}
+function endStroke() {
+  if (currentStroke && currentStroke.length) undoStack.push(currentStroke);
+  currentStroke = null;
+}
+function paintAt(tileX, tileY) {
+  if (!mapW || !mapH) return;
+  if (tileX < 0 || tileY < 0 || tileX >= mapW || tileY >= mapH) return;
 
-btnCloseCopy.addEventListener("click", () => {
-  copyModal.hidden = true;
-});
+  const row = mapLines[tileY];
+  const prev = row[tileX];
+  if (prev === brushChar) return;
 
-copyClose.addEventListener("click", closeCopyModal);
-
-buildBrushRow();
-
-function inBounds(x, y) {
-  return x >= 0 && y >= 0 && x < mapW && y < mapH;
+  mapLines[tileY] = row.substring(0, tileX) + brushChar + row.substring(tileX + 1);
+  if (currentStroke) currentStroke.push({ x: tileX, y: tileY, prev });
 }
 
-function paintAtTile(tx, ty) {
-  if (!grid.length) return;
-  if (!inBounds(tx, ty)) return;
-
-  const prev = grid[ty][tx];
-  const next = currentBrush;
-  if (prev === next) return;
-
-  // record undo
-  undoStack.push({ x: tx, y: ty, prev, next });
-  if (undoStack.length > UNDO_MAX) undoStack.shift();
-
-  // apply
-  grid[ty][tx] = next;
-}
-
-function undo() {
-  const op = undoStack.pop();
-  if (!op) return;
-  if (!inBounds(op.x, op.y)) return;
-  grid[op.y][op.x] = op.prev;
-  draw();
-}
-
-function gridToText() {
-  const lines = [];
-  for (let y = 0; y < mapH; y++) {
-    // right-trim but keep meaningful interior spaces
-    let line = grid[y].join("");
-    line = line.replace(/\s+$/g, "");
-    lines.push(line);
+btnUndo.addEventListener("click", () => {
+  const stroke = undoStack.pop();
+  if (!stroke) return;
+  // restore in reverse
+  for (let i = stroke.length - 1; i >= 0; i--) {
+    const { x, y, prev } = stroke[i];
+    const row = mapLines[y];
+    mapLines[y] = row.substring(0, x) + prev + row.substring(x + 1);
   }
-  return lines.join("\n");
+  draw();
+});
+
+// -------------------- Copy / Export --------------------
+
+function openCopyModal() {
+  copyText.value = mapLines.join("\n");
+  copyModal.classList.add("open");
 }
 
-async function exportToClipboard() {
-  const text = gridToText();
+function closeCopyModal() {
+  copyModal.classList.remove("open");
+}
 
-  // Try real clipboard first
+btnCopy.addEventListener("click", async () => {
+  if (!mapW || !mapH) return;
+
+  // Try direct clipboard first (best case)
   try {
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      await navigator.clipboard.writeText(text);
-      labelEl.textContent = `Copied ${mapW}×${mapH} to clipboard`;
-      return;
-    }
-  } catch {}
+    await navigator.clipboard.writeText(mapLines.join("\n"));
+    labelEl.textContent = "Copied map text to clipboard.";
+    return;
+  } catch {
+    // Fallback: show modal so you can manually copy
+    openCopyModal();
+  }
+});
 
-  // Fallback modal
-  copyText.value = text;
-  copyModal.hidden = false;
-  // Focus + select for quick manual copy
-  setTimeout(() => {
-    copyText.focus();
-    copyText.select();
-  }, 50);
-}
+copyClose.addEventListener("click", () => {
+  closeCopyModal();
+});
 
-// -------------------- Pan + pinch --------------------
+copyModal.addEventListener("click", (ev) => {
+  // tapping the dim background should close it
+  if (ev.target === copyModal) closeCopyModal();
+});
+
+// -------------------- Pan + pinch + paint --------------------
 
 let pointers = new Map();
 let lastPinchDist = 0;
@@ -353,54 +296,55 @@ function dist(a, b) {
   return Math.hypot(dx, dy);
 }
 
+function eventToTile(ev) {
+  const rect = canvas.getBoundingClientRect();
+  const x = ev.clientX - rect.left;
+  const y = ev.clientY - rect.top;
+  const tx = Math.floor(camX + x / zoom);
+  const ty = Math.floor(camY + y / zoom);
+  return { tx, ty };
+}
+
 canvas.addEventListener("pointerdown", (ev) => {
   canvas.setPointerCapture(ev.pointerId);
   pointers.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
   lastPinchDist = 0;
 
-  // Single tap paint (only in paint mode)
-  if (editMode === "paint") {
-    const uiH = document.getElementById("ui").getBoundingClientRect().height;
-    const px = ev.clientX;
-    const py = ev.clientY - uiH;
-
-    const tx = Math.floor(camX + (px / zoom));
-    const ty = Math.floor(camY + (py / zoom));
-
-    paintAtTile(tx, ty);
+  if (paintMode) {
+    beginStroke();
+    const { tx, ty } = eventToTile(ev);
+    paintAt(tx, ty);
     draw();
   }
 });
 
 canvas.addEventListener("pointermove", (ev) => {
   if (!pointers.has(ev.pointerId)) return;
+
   const prev = pointers.get(ev.pointerId);
   const cur = { x: ev.clientX, y: ev.clientY };
   pointers.set(ev.pointerId, cur);
 
   const pts = Array.from(pointers.values());
 
-  if (pts.length === 1) {
-  if (editMode === "pan") {
-    // Pan mode: drag moves camera
+  if (paintMode && pts.length === 1) {
+    const { tx, ty } = eventToTile(ev);
+    paintAt(tx, ty);
+    draw();
+    return;
+  }
+
+  if (!paintMode && pts.length === 1) {
+    // Pan
     const dx = cur.x - prev.x;
     const dy = cur.y - prev.y;
     camX -= dx / zoom;
     camY -= dy / zoom;
     draw();
-  } else {
-    // Paint mode: drag paints tiles
-    const uiH = document.getElementById("ui").getBoundingClientRect().height;
-    const px = cur.x;
-    const py = cur.y - uiH;
-
-    const tx = Math.floor(camX + (px / zoom));
-    const ty = Math.floor(camY + (py / zoom));
-
-    paintAtTile(tx, ty);
-    draw();
+    return;
   }
-} else if (pts.length >= 2) {
+
+  if (!paintMode && pts.length >= 2) {
     // Pinch zoom using first two pointers
     const a = pts[0];
     const b = pts[1];
@@ -416,11 +360,11 @@ canvas.addEventListener("pointermove", (ev) => {
       const oldZoom = zoom;
       zoom = clamp(Math.round(zoom + delta * 0.03), ZOOM_MIN, ZOOM_MAX);
 
-      // Keep center stable-ish
-      const cx = (window.innerWidth / 2) / oldZoom + camX;
-      const cy = (window.innerHeight / 2) / oldZoom + camY;
-      camX = cx - (window.innerWidth / 2) / zoom;
-      camY = cy - (window.innerHeight / 2) / zoom;
+      // keep center-ish stable
+      const cx = (canvas.clientWidth / 2) / oldZoom + camX;
+      const cy = (canvas.clientHeight / 2) / oldZoom + camY;
+      camX = cx - (canvas.clientWidth / 2) / zoom;
+      camY = cy - (canvas.clientHeight / 2) / zoom;
 
       lastPinchDist = d;
       draw();
@@ -428,28 +372,19 @@ canvas.addEventListener("pointermove", (ev) => {
   }
 });
 
-canvas.addEventListener("pointerup", (ev) => {
+function endPointer(ev) {
   pointers.delete(ev.pointerId);
   lastPinchDist = 0;
-});
-canvas.addEventListener("pointercancel", (ev) => {
-  pointers.delete(ev.pointerId);
-  lastPinchDist = 0;
-});
+  if (paintMode) endStroke();
+}
+
+canvas.addEventListener("pointerup", endPointer);
+canvas.addEventListener("pointercancel", endPointer);
 
 // -------------------- Boot --------------------
 
 window.addEventListener("resize", resize);
 
-(function boot() {
-  try {
-    resize();
-    loadInitialMap()
-      .then(() => draw())
-      .catch(err => {
-        labelEl.textContent = String(err);
-      });
-  } catch (err) {
-    labelEl.textContent = String(err);
-  }
-})();
+// Start blank until user loads a file
+resize();
+draw();
