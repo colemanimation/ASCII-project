@@ -33,10 +33,10 @@ button {
 background: #000;
 color: #fff;
 border: 2px double #fff;
-font-size: 14px;
-padding: 6px 10px;
-min-width: 44px;
-min-height: 44px;
+font-size: 16px;
+padding: 10px 12px;
+min-width: 48px;
+min-height: 48px;
 }
 
 button:active {
@@ -84,25 +84,8 @@ padding-bottom: calc(8px + env(safe-area-inset-bottom));
 
 display: flex;
 align-items: center;
-gap: 12px;
-flex-wrap: wrap;
-}
-
-#editLeft {
-display: flex;
 gap: 8px;
-}
-
-#brushSection {
-display: flex;
-align-items: center;
-gap: 6px;
-}
-
-#brushSizeLabel {
-opacity: 0.9;
-font-size: 14px;
-white-space: nowrap;
+flex-wrap: wrap;
 }
 
 #brushSizeRow {
@@ -127,7 +110,6 @@ overflow-x: auto;
 opacity: 0.9;
 font-size: 14px;
 white-space: nowrap;
-margin-left: auto;
 }
 
 /* ––––– Copy modal ––––– */
