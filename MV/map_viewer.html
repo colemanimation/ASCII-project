@@ -9,23 +9,17 @@
 </head>
 <body>
   <div id="ui">
-    <div id="left">
-      <button id="btnOut" aria-label="Zoom out">−</button>
-      <button id="btnIn" aria-label="Zoom in">+</button>
-      <button id="btnFit" aria-label="Fit to screen">Fit</button>
-    </div>
+    <button id="btnOut" aria-label="Zoom out">−</button>
+    <button id="btnIn" aria-label="Zoom in">+</button>
+    <button id="btnFit" aria-label="Fit to screen">Fit</button>
 
 ```
-<div id="center">
-  <div id="label">Loading…</div>
-</div>
+<div id="label">Loading…</div>
 
-<div id="right">
-  <label class="fileBtn">
-    Open…
-    <input id="fileInput" type="file" accept=".txt,.map,text/plain" />
-  </label>
-</div>
+<label style="margin-left: auto; cursor: pointer;">
+  Open…
+  <input id="fileInput" type="file" accept=".txt,.map,text/plain" />
+</label>
 ```
 
   </div>
@@ -35,23 +29,19 @@
   <!-- Bottom editor toolbar -->
 
   <div id="editBar">
-    <div id="editLeft">
-      <button id="btnMode" title="Toggle paint/pan">Paint</button>
-      <button id="btnUndo" title="Undo">Undo</button>
-      <button id="btnCopy" title="Copy map to clipboard">Copy</button>
-    </div>
+    <button id="btnMode" title="Toggle paint/pan">Paint</button>
+    <button id="btnUndo" title="Undo">Undo</button>
+    <button id="btnCopy" title="Copy map to clipboard">Copy</button>
 
 ```
-<div id="brushSection">
-  <div id="brushSizeLabel">Size:</div>
+<div style="display: flex; align-items: center; gap: 6px; margin-left: 12px;">
+  <span style="opacity: 0.9; font-size: 14px;">Size:</span>
   <div id="brushSizeRow" aria-label="Brush size"></div>
 </div>
 
 <div id="brushRow" aria-label="Brush palette"></div>
 
-<div id="editRight">
-  <span id="brushLabel">Brush: .</span>
-</div>
+<span id="brushLabel" style="margin-left: auto;">Brush: .</span>
 ```
 
   </div>
