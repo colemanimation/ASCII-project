@@ -266,7 +266,7 @@ if (!mapW || !mapH) return;
 // Calculate brush offset (centered)
 const offset = Math.floor(brushSize / 2);
 
-// Paint in a square around the center tile yo
+// Paint in a square around the center tile
 for (let dy = -offset; dy <= offset; dy++) {
 for (let dx = -offset; dx <= offset; dx++) {
 const x = tileX + dx;
