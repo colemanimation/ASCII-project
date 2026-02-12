@@ -1,64 +1,48 @@
 <!doctype html>
-
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
   <title>ASCII Map Viewer</title>
   <link rel="stylesheet" href="./map_viewer.css" />
 </head>
 <body>
+
+  <!-- Top toolbar -->
   <div id="ui">
-    <button id="btnOut" aria-label="Zoom out">−</button>
-    <button id="btnIn" aria-label="Zoom in">+</button>
-    <button id="btnFit" aria-label="Fit to screen">Fit</button>
-
-```
-<div id="label">Loading…</div>
-
-<label style="margin-left: auto; cursor: pointer;">
-  Open…
-  <input id="fileInput" type="file" accept=".txt,.map,text/plain" />
-</label>
-```
-
+    <button id="btnOut" type="button">-</button>
+    <button id="btnIn" type="button">+</button>
+    <button id="btnFit" type="button">Fit</button>
+    <div id="label">Loading...</div>
+    <button id="btnOpen" type="button">Open...</button>
+    <input id="fileInput" type="file" accept=".txt" />
   </div>
 
-<canvas id="c"></canvas>
+  <!-- Canvas -->
+  <canvas id="c"></canvas>
 
-  <!-- Bottom editor toolbar -->
-
+  <!-- Bottom edit bar -->
   <div id="editBar">
-    <button id="btnMode" title="Toggle paint/pan">Paint</button>
-    <button id="btnUndo" title="Undo">Undo</button>
-    <button id="btnCopy" title="Copy map to clipboard">Copy</button>
+    <button id="btnPaint" type="button">Paint</button>
+    <button id="btnUndo" type="button">Undo</button>
+    <button id="btnCopy" type="button">Copy</button>
 
-```
-<div style="display: flex; align-items: center; gap: 6px; margin-left: 12px;">
-  <span style="opacity: 0.9; font-size: 14px;">Size:</span>
-  <div id="brushSizeRow" aria-label="Brush size"></div>
-</div>
+    <span id="brushSizeLabel">Size:</span>
+    <div id="brushSizeRow"></div>
 
-<div id="brushRow" aria-label="Brush palette"></div>
-
-<span id="brushLabel" style="margin-left: auto;">Brush: .</span>
-```
-
+    <span id="brushLabel">Brush: .</span>
+    <div id="brushRow"></div>
   </div>
 
-  <!-- Clipboard fallback (iOS can block clipboard) -->
-
-  <div id="copyModal">
+  <!-- Copy modal -->
+  <div id="copyModal" aria-hidden="true">
     <div id="copyModalInner">
-      <div class="copyTitle">Copy map text</div>
-      <textarea id="copyText"></textarea>
-      <div class="copyBtns">
-        <button id="copyClose">Close</button>
-      </div>
+      <div style="font-size:16px;">Copy map text</div>
+      <textarea id="copyText" spellcheck="false"></textarea>
+      <button id="copyClose" type="button">Close</button>
     </div>
   </div>
 
   <script type="module" src="./map_viewer.js"></script>
-
 </body>
 </html>
