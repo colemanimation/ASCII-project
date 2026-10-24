@@ -1,9 +1,9 @@
-import {parseMap,findRoute,validPosition,nearestWalkable,isWater,TILES} from './atlas.js';
-import {AtlasRenderer} from './render.js';
-import {SceneRenderer,drawIntro} from './scene.js';
-import {ChipPlayer} from './music.js';
-import {SONGS} from './songs.js';
-import {ITEMS,ENEMIES,DREAMS,TOWN_IDS,PORTRAITS,newGame,hydrate,maxHp,maxMp,attackPower,defensePower,xpNeeded,addItem,priceFor,buyItem,sellItem,equipItem,useItem,rest,startBattle,battleAction,randomEncounter,makeTown,makeDream,makeFinale,localWalkable,localRoute,advanceStalker,hideFromStalker} from './rpg.js';
+import {parseMap,findRoute,validPosition,nearestWalkable,isWater,TILES} from './atlas.js?v=feverwake-20261024-1';
+import {AtlasRenderer} from './render.js?v=feverwake-20261024-1';
+import {SceneRenderer,drawIntro} from './scene.js?v=feverwake-20261024-1';
+import {ChipPlayer} from './music.js?v=feverwake-20261024-1';
+import {SONGS} from './songs.js?v=feverwake-20261024-1';
+import {ITEMS,ENEMIES,DREAMS,TOWN_IDS,PORTRAITS,newGame,hydrate,maxHp,maxMp,attackPower,defensePower,xpNeeded,addItem,priceFor,buyItem,sellItem,equipItem,useItem,rest,startBattle,battleAction,randomEncounter,makeTown,makeDream,makeFinale,localWalkable,localRoute,advanceStalker,hideFromStalker} from './rpg.js?v=feverwake-20261024-1';
 const $=id=>document.getElementById(id), KEY='feverwake-save-v2', reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const music=new ChipPlayer;let sound=false,world,meta,atlas,localRenderer,localMap,state,loaded=null,started=false,atlasView=false,route=[],routeTarget=null,lastStep=0,hold=null,holdStart=0,overlayType=null,previousFocus=null,installPrompt=null,lastFrame=0,saveError=false,offlineReady=false;
 const directions={up:[0,-1],right:[1,0],down:[0,1],left:[-1,0]},escapeHTML=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));

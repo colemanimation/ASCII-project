@@ -39,6 +39,6 @@ No production dependencies or build step. Serve this directory over HTTP and ope
 - `js/scene.js`: town/dungeon renderer and animated intro.
 - `js/atlas.js`: map parsing, collision, and A* routing.
 - `scripts/build-world.py`: deterministic atlas generator, including current lore.
-- `manifest.webmanifest`, `sw.js`, `icons/`: home-screen and offline support. Increment the service-worker cache version when shipping asset changes.
+- `manifest.webmanifest`, `sw.js`, `icons/`: home-screen and offline support. Increment the service-worker cache version and the shared asset-version query in the entrypoint/imports when shipping asset changes. This prevents older GitHub Pages assets from being mixed with a newer screen.
 
 The original `Test06.html`, early maps, and standalone map editor remain in the repository for reference. This game uses the new `feverwake-save-v2` save slot.

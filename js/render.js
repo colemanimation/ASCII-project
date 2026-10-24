@@ -1,4 +1,4 @@
-import {TILES,isWater} from './atlas.js';
+import {TILES,isWater} from './atlas.js?v=feverwake-20261024-1';
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 export class AtlasRenderer{
  constructor(canvas,world,meta){
