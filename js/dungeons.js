@@ -1,4 +1,4 @@
-import {canvasMap,put,rect,path,object} from './tilekit.js?v=dialogue-1';
+import {canvasMap,put,rect,path,object} from './tilekit.js?v=compact-1';
 export const DREAM_LAYOUTS=[
  {name:'The Endless Nursery',spawn:[8,34],stalker:[55,34],rooms:[['FOYER',2,27,15,11],['PLAYROOM',2,3,18,15],['CLOCKWORK',25,3,18,12],['NURSERY',47,4,15,16],['LANDING',24,19,18,13],['ATTIC',47,25,15,13]],
  links:[[[9,32],[9,10]],[[11,10],[34,10]],[[34,10],[34,25]],[[9,31],[28,31],[28,25]],[[34,28],[54,28]],[[38,23],[44,23],[44,16],[53,16]]],

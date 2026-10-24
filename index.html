@@ -6,11 +6,11 @@
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Feverwake">
 <link rel="manifest" href="./manifest.webmanifest"><link rel="icon" href="./icons/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
 <link rel="preload" href="./fonts/fever-terminal.ttf" as="font" type="font/ttf" crossorigin>
-<link rel="stylesheet" href="./style.css?v=dialogue-1"><link rel="stylesheet" href="./dialogue.css?v=dialogue-1"><title>FEVERWAKE / An ASCII dream RPG</title>
+<link rel="stylesheet" href="./style.css?v=compact-1"><link rel="stylesheet" href="./dialogue.css?v=compact-1"><title>FEVERWAKE / An ASCII dream RPG</title>
 </head>
 <body>
 <main id="game" class="game" hidden>
- <header class="masthead"><button id="title-button" class="wordmark" aria-label="Open game menu">FEVERWAKE<span>A DREAM INFECTION</span></button><div class="chapter" id="chapter">I / THE SLEEPING SICKNESS</div><button id="sound" aria-label="Toggle music">Music off</button></header>
+ <header class="masthead"><button id="title-button" class="wordmark" aria-label="Open game menu">FEVERWAKE<span>A DREAM INFECTION</span></button><div class="chapter" id="chapter">I / THE SLEEPING SICKNESS</div><button id="sound" aria-label="Toggle sound">Sound off</button></header>
  <section class="hud frame" aria-label="Traveler status"><div><span class="stat-label">HP</span><strong id="hp-text">40/40</strong><span class="meter" id="hp-bar">[########]</span></div><div><span class="stat-label">FP</span><strong id="mp-text">12/12</strong><span class="meter" id="mp-bar">[########]</span></div><div class="stat-simple"><span class="stat-label">LV</span><strong id="level">01</strong></div><div class="stat-simple"><span class="stat-label">GOLD</span><strong id="gold">38</strong></div></section>
  <div class="scene-bar"><div><span id="realm" class="eyebrow">WAKING WORLD</span><h1 id="location">The Lantern Coast</h1></div><div id="scene-tools"><button id="atlas">Map</button><button id="journal">Journal</button></div></div>
  <section class="viewport frame" aria-label="Game scene"><canvas id="map" aria-label="ASCII game map. Use the directional controls to move." role="img"></canvas><div id="map-caption" class="map-caption">@ you / H harbor / o town</div><div id="dread" class="dread" hidden></div><div id="zoom-controls" class="zoom-controls"><button id="zoom-out" aria-label="Zoom out">-</button><button id="zoom-in" aria-label="Zoom in">+</button></div></section>
@@ -28,5 +28,5 @@ __        __    _    _  _______
   \  /\  /   / ___ \| . \| |___
    \/  \/   /_/   \_\_|\_\_____|</pre><h1 class="visually-hidden">FEVERWAKE</h1><p id="intro-line">At first, it was only a bad dream.</p><div class="intro-actions"><button id="continue" class="primary" hidden>Continue</button><button id="begin" class="primary">Begin</button></div><span id="loading" class="intro-footer">Loading the coast...</span></div><div class="intro-bottom">@ ONE SLEEPER AT A TIME <span>EST. IN A BAD DREAM</span></div></section>
 <div id="overlay" class="overlay" hidden><section id="dialog" class="dialog frame" role="dialog" aria-modal="true" aria-labelledby="dialog-title"><header><span id="dialog-tag" class="eyebrow"></span><button id="dialog-close" aria-label="Close dialog">x</button></header><h2 id="dialog-title"></h2><div id="dialog-content"></div><div id="dialog-actions" class="dialog-actions"></div></section></div>
-<script type="module" src="./js/main.js?v=dialogue-1"></script>
+<script type="module" src="./js/main.js?v=compact-1"></script>
 </body></html>

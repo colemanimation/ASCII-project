@@ -29,11 +29,19 @@ Combat, shops, equipment, selling, inns, dream levels and powers, dialogue choic
 Mara has four generated mouth poses converted into 64 x 38 printable ASCII
 frames. Her mouth follows the typewriter text, pauses at punctuation, and
 closes when a line ends. **Menu > Mara's warning** replays the conversation
-without resetting a journey. **Show line** (or Space / Enter) reveals the rest
-immediately. Longer conversations have short pages so phones never need to
-scroll. Text chatter has its own mute button and remembers the setting;
-background music remains a separate switch. Reduced-motion mode shows each
-line immediately. Closing, skipping, or hiding a conversation stops its sound.
+without resetting a journey. Tap the portrait, text, or **Continue** (or press
+Space / Enter) to reveal the rest immediately. The same bottom row advances
+longer conversations, then becomes the reply choices. Dialogue keeps only the
+portrait, speaker, text, close control, and that action row; short pages fit
+small phones without scrolling. Reduced-motion mode shows each line immediately.
+Closing, skipping, or hiding a conversation stops its chatter.
+
+**Sound** controls both music and text chatter and remembers the setting. It
+also appears in the menu. Switching it on plays a two-note confirmation, even
+when no one is speaking. One shared Web Audio output uses the playback audio
+session where supported, resumes after interruptions, and retries from a real
+tap if the browser suspends it. Text chatter uses a clearer midrange tone for
+phone speakers.
 
 Arrow keys / WASD move. E / Enter interacts. I opens inventory, M the map or local plan, J the journal, and Esc the menu. On a phone, hold the direction buttons or tap a destination. Tap a person or service to approach it. Tap a landmark on the world map to travel there. Ordinary encounters interrupt travel.
 
@@ -74,7 +82,9 @@ characters outside a 16 x 6 mouth rectangle to the original pose. It writes
 The browser renders the frames as text; the source PNGs are not loaded by the
 game. `scripts/portrait_to_ascii.py` also converts other portraits via its CLI.
 `js/dialogue.js` owns the reveal/animation clock and `js/text-sound.js` makes
-the short square-wave chatter locally through Web Audio.
+short triangle-wave chatter locally through Web Audio. `js/audio-output.js`
+shares one output between chatter and music, owns mute persistence, and handles
+gesture unlocking and interrupted audio sessions.
 
 ### Game source
 
@@ -91,6 +101,6 @@ No production dependencies or build step. Serve the repository over HTTP and ope
 - `scripts/build-world.py`: deterministic overworld generator.
 - `sw.js`, `manifest.webmanifest`: offline and home-screen support.
 
-When shipping changes, update the service-worker cache version and all shared asset-version queries together. This prevents mixed old and new modules on GitHub Pages. Tests cover the full nested offline module graph, town routes, collisions, puzzle gates, save restoration, combat, economy, and an escapable path through each dream.
+When shipping changes, update the service-worker cache version and all shared asset-version queries together. This prevents mixed old and new modules on GitHub Pages. Tests cover the full nested offline module graph, town routes, collisions, puzzle gates, save restoration, combat, economy, an escapable path through each dream, dialogue timing, and shared audio mute/resume behavior.
 
 The original prototypes and standalone map editor remain for reference. The current game uses the `feverwake-save-v2` save slot and layout version 3.

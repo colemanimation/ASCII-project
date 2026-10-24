@@ -4,7 +4,6 @@ import {existsSync} from 'node:fs';
 const root=existsSync(new URL('../dist/index.html',import.meta.url))?'../dist/':'../';
 const {DialoguePlayer,splitDialogue,revealDelay,mouthPose}=await import(new URL(root+'js/dialogue.js',import.meta.url));
 const {MARA}=await import(new URL(root+'js/portraits.js',import.meta.url));
-const {TextSound}=await import(new URL(root+'js/text-sound.js',import.meta.url));
 function clock(){let serial=0;const tasks=new Map;return {schedule(fn,delay){tasks.set(++serial,{fn,delay});return serial;},cancel(id){tasks.delete(id);},step(){const [id,task]=tasks.entries().next().value||[];if(!task)return;tasks.delete(id);task.fn();return task.delay;},get size(){return tasks.size;}};}
 test('four distinct printable ASCII mouth poses keep every other character fixed',()=>{
  const {columns,rows,frames,mouthBounds:[x0,y0,x1,y1]}=MARA;assert.equal(new Set(Object.values(frames).map(a=>a.join('\n'))).size,4);
@@ -20,9 +19,4 @@ test('skipping a line closes the mouth, reveals everything, and cancels all late
 });
 test('closing a speaking window and reduced motion leave no running animation',()=>{
  const c=clock();let ended=0,ticks=0;const make=reduced=>new DialoguePlayer({text:'A voice.',schedule:c.schedule,cancel:c.cancel,reduced,onTick:()=>ticks++,onComplete:()=>ended++});const p=make(false);p.start();c.step();p.dispose();assert.equal(c.size,0);assert.equal(ended,0);const q=make(true);q.start();assert.equal(c.size,0);assert.equal(ended,1);assert.equal(ticks,0);
-});
-test('text sound is brief, rate limited, and stops when muted or hidden',async()=>{
- const nodes=[],values=[];class Context{constructor(){this.state='running';this.currentTime=1;this.destination={};}createOscillator(){const n={frequency:{value:0},connect(){},disconnect(){},start(t){values.push(['start',t]);},stop(t){values.push(['stop',t]);}};nodes.push(n);return n;}createGain(){return {gain:{setValueAtTime(){},linearRampToValueAtTime(){},exponentialRampToValueAtTime(){}},connect(){},disconnect(){}};}createBiquadFilter(){return {frequency:{},Q:{},connect(){},disconnect(){}};}}
- globalThis.window={AudioContext:Context};globalThis.document={hidden:false};globalThis.localStorage={getItem:()=>null,setItem(){}};
- try{const s=new TextSound;await s.unlock();s.tick('a',2);s.tick('b',4);assert.equal(nodes.length,1);assert.ok(values[1][1]-values[0][1]<=.031);s.ctx.currentTime+=.1;document.hidden=true;s.tick('c',6);assert.equal(nodes.length,1);document.hidden=false;await s.toggle();assert.equal(s.nodes.size,0);s.tick('d',8);assert.equal(nodes.length,1);}finally{delete globalThis.window;delete globalThis.document;delete globalThis.localStorage;}
 });

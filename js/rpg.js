@@ -1,5 +1,5 @@
-export {makeTown} from './towns.js?v=dialogue-1';
-export {makeDream,syncDreamMap,operateDream,roomAt} from './dungeons.js?v=dialogue-1';
+export {makeTown} from './towns.js?v=compact-1';
+export {makeDream,syncDreamMap,operateDream,roomAt} from './dungeons.js?v=compact-1';
 // Feverwake: deterministic game rules. The UI supplies randomness for encounters.
 export const ITEMS={
  potion:{name:'Red cordial',kind:'use',price:12,heal:26,description:'Restores 26 HP.'},

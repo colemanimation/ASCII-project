@@ -27,8 +27,8 @@ export class DialoguePlayer{
  dispose(){this.cancel(this.timer);this.active=false;this.done=true;this.onUpdate(this.text.slice(0,this.index),'closed');}
 }
 
-// The invisible full line reserves its final size; revealing text never moves
-// the portrait, frame, controls, or choices. Pages avoid scrolling on phones.
+// Reserve the full page height, then reveal characters without moving the face.
+// The single bottom row advances pages or becomes the player's actual choices.
 export function mountConversation({root,actions,text,portrait,frames,speaker,reduced,sound}){
  root.replaceChildren();const make=(tag,cls,value)=>{const n=document.createElement(tag);n.className=cls;if(value)n.textContent=value;return n;};
  const conversation=make('div','conversation'+(frames?' has-speaking-portrait':''));
@@ -37,19 +37,19 @@ export function mountConversation({root,actions,text,portrait,frames,speaker,red
  const stack=make('div','speech-stack'),copy=make('div','speech-copy'),reserve=make('p','speech-reserve'),line=make('p','speech-line');
  reserve.setAttribute('aria-hidden','true');line.setAttribute('aria-hidden','true');copy.append(reserve,line);
  const accessible=make('p','visually-hidden');accessible.setAttribute('aria-live','polite');accessible.setAttribute('aria-atomic','true');
- const toolbar=make('div','speech-toolbar'),advance=make('button','speech-advance','Show line'),mute=make('button','speech-sound'),counter=make('span','speech-count');
- toolbar.append(advance,mute);stack.append(copy,accessible,toolbar,counter);conversation.append(face,stack);root.append(conversation);
+ stack.append(copy,accessible);conversation.append(face,stack);root.append(conversation);
  const small=innerWidth<=600,short=innerHeight<=620;
- const pages=splitDialogue(text,small?(short?115:165):210);let page=0,player=null,disposed=false;
- const labelSound=()=>{mute.textContent=sound.enabled?'Text sound on':'Text sound off';mute.setAttribute('aria-pressed',String(sound.enabled));};labelSound();
- mute.onclick=async()=>{await sound.toggle();if(!disposed)labelSound();};
+ const pages=splitDialogue(text,small?(short?145:200):230),choices=[...actions.children];let page=0,player=null,disposed=false;
+ const next=make('button','speech-next','Continue >');next.setAttribute('aria-label','Reveal or continue dialogue');
+ const setActions=nodes=>{const focused=actions.contains(document.activeElement);actions.replaceChildren(...nodes);if(focused)actions.querySelector('button:not(:disabled)')?.focus({preventScroll:true});};
  const showPage=()=>{
-  player?.dispose();actions.style.visibility='hidden';actions.inert=true;const full=pages[page];reserve.textContent=full;accessible.textContent=full;advance.textContent='Show line';counter.textContent='LINE '+(page+1)+' / '+pages.length+'  /  SPACE: REVEAL';
-  player=new DialoguePlayer({text:full,reduced,onTick:(c,i)=>sound.tick(c,i),onUpdate:(visible,pose)=>{line.textContent=visible;copy.dataset.typing=String(visible.length<full.length);if(frames&&art.dataset.pose!==pose){art.textContent=frames[pose].join('\n');art.dataset.pose=pose;}},onComplete:()=>{const last=page===pages.length-1;actions.style.visibility=last?'visible':'hidden';actions.inert=!last;advance.textContent=last?'Replay line':'Next line >';counter.textContent='LINE '+(page+1)+' / '+pages.length+(last?'  /  YOUR TURN':'  /  CONTINUE');}});player.start();
+  player?.dispose();const full=pages[page];reserve.textContent=full;accessible.textContent=full;setActions([next]);
+  player=new DialoguePlayer({text:full,reduced,onTick:(c,i)=>sound.tick(c,i),onUpdate:(visible,pose)=>{line.textContent=visible;copy.dataset.typing=String(visible.length<full.length);if(frames&&art.dataset.pose!==pose){art.textContent=frames[pose].join('\n');art.dataset.pose=pose;}},onComplete:()=>{if(page===pages.length-1)setActions(choices);}});player.start();
  };
  const reveal=()=>{if(player?.active){player.finish();sound.stop();return true;}return false;};
- advance.onclick=()=>{sound.unlock();if(reveal())return;if(page<pages.length-1)page++;showPage();};copy.onclick=reveal;
+ const advance=()=>{if(disposed)return false;sound.unlock();if(reveal())return true;if(page<pages.length-1){page++;showPage();return true;}return false;};
+ next.onclick=advance;copy.onclick=advance;art.onclick=advance;
  const visibility=()=>{if(document.hidden){reveal();sound.stop();}};document.addEventListener('visibilitychange',visibility);
- showPage();sound.unlock().then(()=>{if(!disposed)labelSound();});
- return {reveal,dispose(){disposed=true;player?.dispose();sound.stop();document.removeEventListener('visibilitychange',visibility);}};
+ showPage();sound.unlock();
+ return {reveal,advance,dispose(){disposed=true;player?.dispose();sound.stop();document.removeEventListener('visibilitychange',visibility);}};
 }

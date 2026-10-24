@@ -1,4 +1,4 @@
-import {isWater} from './atlas.js?v=dialogue-1';
+import {isWater} from './atlas.js?v=compact-1';
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const COLORS={'~':'#587c8e','.':'#727c63',',':'#7c8c70',T:'#a6bc8d',Y:'#91a97f',A:'#c5c7be','^':'#b9bab2',"'":'#b0c1c3',':':'#c1b49a',';':'#8e9c7c','+':'#c0b9a4','=':'#c4bba5','-':'#aaa58e','#':'#bcbcaf'};
 export class AtlasRenderer{
