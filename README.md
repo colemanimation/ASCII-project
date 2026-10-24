@@ -1,44 +1,67 @@
 # Feverwake
 
-A single-screen ASCII RPG about a world whose dreams are becoming infected.
+An ASCII RPG about a world whose dreams are becoming infected.
 
 **Play:** https://colemanimation.github.io/ASCII-project/
 
-The Lantern Coast is the waking world: a 280 × 116 ASCII atlas with 14 landmarks, roads, mountain passes, harbors, and a folding skiff. The dungeons are inside the dreams of people who cannot wake up.
+**Village construction kit:** https://colemanimation.github.io/ASCII-project/kit.html
 
-## The playable chapter
+The waking world is the Lantern Coast, a 280 x 116 character atlas with 14 landmarks, mountain passes, harbors, roads, and a folding skiff. The nightmares belong to people who cannot wake up.
 
-- Six towns with NPC conversations and ASCII portraits, provision shops, equipment, selling, and inns.
-- Wilderness encounters and turn-based combat: attack, guard, use items, escape, and unlock dream powers.
-- Three infected dreams: The Endless Nursery, The School After Midnight, and The House Beneath the Tide. Each has a guardian, chests, hazards, hiding places, and a memory to recover.
-- Dream experience grants levels and abilities. Waking choices build empathy or courage, changing prices and escape odds.
-- A roaming visitor follows you through nightmares. It cannot be killed. The final sequence brings it into the waking world, where you must escape without fighting.
-- Animated ASCII intro, original chiptunes, automatic local saves, import/export backups, and an installable offline app.
+## The terminal edition
 
-This is a compact first chapter, with three dreams and a short ending. Town layouts share a common structure. The world remains explorable after the chapter ends.
+The game uses a black background, an original 5x7 bitmap font, printable ASCII artwork, text window frames, bracketed commands, and character health bars. Map markers and travel paths are characters too. There are no vector circles, glow effects, gradient panels, or modern button chrome in the game.
 
-## Controls
+Six distinct 64 x 40 towns have shops, inns, dream wards, conversations, ASCII portraits, and roaming residents. Brackenport has a fish quay, market stalls, gardens, laundry and cottages. Other settlements use stilt bridges, snowy fortifications, caravan tents, and cedar docks. Residents walk routes, pause at their stops, avoid each other, and wait when you approach. Service counters stay put. Water and chimney smoke animate with character changes.
 
-Arrow keys / WASD move. E / Enter interacts. I opens inventory, M the atlas, J the journal, and Esc the menu. On a phone, hold the directional buttons or tap a destination. Tap a named landmark on the atlas to travel there. Ordinary encounters interrupt travel. Town roads are safe; the skiff crosses open water without encounters.
+Three room-based nightmares have furniture, clues, loot, alternate routes, locks, and mechanisms:
 
-Inside towns: `S` shop, `I` inn, `Q` sleeper, `M` / `N` people, `>` exit. Inside dreams: `$` chest, `B` guardian, `!` memory anchor, `h` hiding place, `>` wake. The visitor is `&`. It advances when you move, leaving time to think.
+- **The Endless Nursery:** find the key in a toy horse and wind the clock. The clock settles the dangerous floorboards and releases the nursery latch.
+- **The School After Midnight:** retrieve a missing name and ring the assembly bell. Either of two entrances leads to the headmaster; the library stair avoids backtracking through the main corridor.
+- **The House Beneath the Tide:** drain the flooded passages with the cellar pump, recover a family photograph, and unlock the guest room.
 
-## Save to a phone
+Each dream has a guardian, hiding places, and a memory anchor. The roaming visitor cannot be killed. It moves when you move. The final sequence brings it into the waking world, where the only option is escape.
 
-Open the GitHub Pages link in Safari and choose **Share → Add to Home Screen**, or use **Install app** in a supporting Android browser. The installed game uses a single screen with no page scrolling. After one successful online load, the service worker caches the whole game for offline play.
+Combat, shops, equipment, selling, inns, dream levels and powers, dialogue choices, chiptunes, the animated intro, automatic saves, import/export, and offline installation remain playable. Waking empathy affects prices; courage helps with escape. Dream levels strengthen you inside dreams.
 
-Saves stay in the current browser or installed app. Browser storage can be cleared by the device; use **Menu → Export save** for a portable backup. Export/import also moves progress between Safari and an installed app if they use separate storage. The previous atlas prototype's beacon progress does not carry into this RPG.
+## Controls and phones
+
+Arrow keys / WASD move. E / Enter interacts. I opens inventory, M the map or local plan, J the journal, and Esc the menu. On a phone, hold the direction buttons or tap a destination. Tap a person or service to approach it. Tap a landmark on the world map to travel there. Ordinary encounters interrupt travel.
+
+Local walking views follow you. **Plan** shows the entire town or dungeon; tap a reachable destination to return to walking. The interface fits one screen, including small phones, without page scrolling.
+
+Town symbols: `@` you, `S` shop, `I` inn, `Q` sleeper, letters for residents, `>` exit. Dream symbols: `?` clue, `k` key, `L` mechanism, `+` locked door, `$` chest, `B` guardian, `!` memory anchor, `h` hiding place, `&` visitor, `>` wake.
+
+Open the game in Safari and choose **Share > Add to Home Screen**, or use **Install app** in a supporting Android browser. After one successful online load, the service worker caches the game and font for offline play. Saves belong to the current browser or installed app; use **Menu > Export save** for a portable backup. Existing Feverwake saves retain inventory, story, choices and combat progress. Saves from the older local layouts resume at a safe entrance; defeated guardians remain defeated.
+
+## ASCII village kit
+
+The [browser workbench](https://colemanimation.github.io/ASCII-project/kit.html) previews all six blueprints and the reusable stamp library. Edit coordinates, roads, water, buildings or NPC routes, then compile. It checks service access and resident routes, displays the collision layer, and exports plain text, blueprint JSON, or map data.
+
+The art and game share one compiler. A stamp is an array of ASCII rows with explicit doors and optional services. Its interior is solid even where the art contains spaces. Roads and bridges remain walkable. The exported `collision` strings use **0 = open, 1 = blocked**.
+
+```sh
+node scripts/ascii-kit.mjs export
+node scripts/ascii-kit.mjs compile data/towns/bracken.blueprint.json my-village
+```
+
+The export command writes mockups, blueprints and collision data under `data/towns/` (or `dist/data/towns/` in a Sites checkout). `tileset.txt` is the printable stamp sheet. Compiling a custom blueprint writes `my-village.txt` and `my-village.json`; it does not replace a shipped town until its blueprint is integrated into `js/towns.js`.
 
 ## Development
 
-No production dependencies or build step. Serve this directory over HTTP and open `index.html`. Run `npm test` with a current Node.js release. When checked out through Sites, static files live in `dist/`; tests and the world generator support both layouts.
+No production dependencies or build step. Serve the repository over HTTP and open `index.html`. Run `npm test`. In a Sites checkout, static files live in `dist/`; scripts and tests support both layouts.
 
-- `js/rpg.js`: pure combat, economy, save validation, local maps, and pursuer rules.
-- `js/main.js`: scenes, dialogue, input, UI, progression, and persistence.
-- `js/render.js`: cached multi-resolution overworld renderer.
-- `js/scene.js`: town/dungeon renderer and animated intro.
-- `js/atlas.js`: map parsing, collision, and A* routing.
-- `scripts/build-world.py`: deterministic atlas generator, including current lore.
-- `manifest.webmanifest`, `sw.js`, `icons/`: home-screen and offline support. Increment the service-worker cache version and the shared asset-version query in the entrypoint/imports when shipping asset changes. This prevents older GitHub Pages assets from being mixed with a newer screen.
+- `js/tilekit.js`, `js/towns.js`: reusable ASCII stamps, collision, authored town plans and walking routes.
+- `js/dungeons.js`: room layouts, clues, gates, keys, mechanisms and persistent dream changes.
+- `js/rpg.js`: combat, economy, saves, pathfinding, residents and the pursuer.
+- `js/main.js`: input, dialogue, progression, UI and persistence.
+- `js/render.js`, `js/scene.js`: character-only world and local renderers.
+- `js/terminal.js`: responsive ASCII frames and text meters.
+- `scripts/build-terminal-font.py`: rebuild the original CC0 font with Python fontTools.
+- `scripts/build-icons.py`: render the font-based home-screen icons with fontTools and Pillow.
+- `scripts/build-world.py`: deterministic overworld generator.
+- `sw.js`, `manifest.webmanifest`: offline and home-screen support.
 
-The original `Test06.html`, early maps, and standalone map editor remain in the repository for reference. This game uses the new `feverwake-save-v2` save slot.
+When shipping changes, update the service-worker cache version and all shared asset-version queries together. This prevents mixed old and new modules on GitHub Pages. Tests cover the full nested offline module graph, town routes, collisions, puzzle gates, save restoration, combat, economy, and an escapable path through each dream.
+
+The original prototypes and standalone map editor remain for reference. The current game uses the `feverwake-save-v2` save slot and layout version 3.

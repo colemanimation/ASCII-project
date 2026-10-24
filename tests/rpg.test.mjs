@@ -4,8 +4,8 @@ import {existsSync,readFileSync} from 'node:fs';
 const root=existsSync(new URL('../dist/index.html',import.meta.url))?'../dist/':'../';
 const r=await import(new URL(root+'js/rpg.js',import.meta.url));
 const {newGame,hydrate,ITEMS,DREAMS,TOWN_IDS,makeTown,makeDream,makeFinale,localWalkable,localRoute,buyItem,sellItem,equipItem,useItem,rest,priceFor,maxHp,maxMp,gainXp,startBattle,battleAction,randomEncounter,advanceStalker}=r;
-test('every town service and nightmare objective is reachable without crossing walls',()=>{
- for(const map of [...TOWN_IDS.map(makeTown),...DREAMS.map((_,i)=>makeDream(i)),makeFinale()]){
+test('every town service and finale objective is reachable without crossing walls',()=>{
+ for(const map of [...TOWN_IDS.map(makeTown),makeFinale()]){
   assert.ok(localWalkable(map,map.spawn.x,map.spawn.y));
   for(const object of map.objects){const path=localRoute(map,map.spawn,object);assert.ok(path,'unreachable '+object.type);let last=map.spawn;for(const p of path){assert.equal(Math.abs(p.x-last.x)+Math.abs(p.y-last.y),1);assert.ok(localWalkable(map,p.x,p.y));last=p;}}
  }
@@ -32,8 +32,8 @@ test('encounters respect towns, roads, cooldowns, and the powerless finale',()=>
  const s=newGame();for(let i=0;i<100;i++)assert.equal(randomEncounter(s,'+',()=>0),null);s.encounterClock=0;for(let i=0;i<16;i++)assert.equal(randomEncounter(s,'T',()=>0),null);assert.equal(randomEncounter(s,'T',()=>0),'wolf');s.scene='town';assert.equal(randomEncounter(s,'.',()=>0),null);s.scene='finale';assert.equal(startBattle(s,'wolf'),false);assert.equal(randomEncounter(s,'.',()=>0),null);
 });
 test('the visitor notices a clear line of sight, stays behind walls, and can be escaped in the finale',()=>{
- const s=newGame(),map=makeDream(0);s.scene='dream';s.local={x:3,y:17};s.stalker={x:6,y:17,active:true,chasing:false};s.dreamTicks=23;advanceStalker(s,map);assert.equal(s.stalker.chasing,true);assert.equal(s.stalker.x,5);
- s.stalker={x:24,y:17,active:true,chasing:false};s.local={x:3,y:17};s.dreamTicks=23;s.dread=0;advanceStalker(s,map);assert.equal(s.stalker.chasing,false);
+ const s=newGame(),map=makeDream(0);s.scene='dream';s.local={x:5,y:34};s.stalker={x:8,y:34,active:true,chasing:false};s.dreamTicks=23;advanceStalker(s,map);assert.equal(s.stalker.chasing,true);assert.equal(s.stalker.x,7);
+ s.stalker={x:31,y:29,active:true,chasing:false};s.local={x:11,y:29};s.dreamTicks=23;s.dread=0;advanceStalker(s,map);assert.equal(s.stalker.chasing,false);
  const final=makeFinale();s.scene='finale';s.local={...final.spawn};s.stalker={...final.stalker,active:false,chasing:false};s.dreamTicks=0;const path=localRoute(final,s.local,final.objects.find(o=>o.type==='ending'));for(const step of path){s.local=step;assert.equal(advanceStalker(s,final),false);}assert.deepEqual(s.local,{x:28,y:18});
 });
 test('save loading repairs hostile or damaged values and preserves active battles',()=>{
@@ -43,4 +43,4 @@ test('the offline manifest points at existing relative resources for GitHub Page
  const manifest=JSON.parse(readFileSync(new URL(root+'manifest.webmanifest',import.meta.url),'utf8'));assert.equal(manifest.start_url,'./');assert.equal(manifest.scope,'./');assert.equal(manifest.display,'standalone');for(const icon of manifest.icons)assert.ok(existsSync(new URL(root+icon.src,import.meta.url)));
  const sw=readFileSync(new URL(root+'sw.js',import.meta.url),'utf8');const assets=JSON.parse(sw.match(/const ASSETS=(\[[^;]+\])/)[1].replaceAll("'",'"'));for(const asset of assets)if(asset!=='./')assert.ok(existsSync(new URL(root+asset,import.meta.url)),asset);
 });
-test('hiding grants a short escape window that survives a save',()=>{const s=newGame();s.scene='dream';s.dread=90;s.dreamTicks=50;s.local={x:4,y:17};s.stalker={x:5,y:17,active:true,chasing:true};assert.equal(r.hideFromStalker(s),true);const restored=hydrate(JSON.parse(JSON.stringify(s)));const map=makeDream(0);for(let i=0;i<6;i++){assert.equal(advanceStalker(restored,map),false);assert.equal(restored.stalker.chasing,false);}assert.equal(restored.hiddenSteps,0);advanceStalker(restored,map);assert.equal(restored.stalker.chasing,true);});
+test('hiding grants a short escape window that survives a save',()=>{const s=newGame();s.scene='dream';s.dread=90;s.dreamTicks=50;s.local={x:5,y:34};s.stalker={x:8,y:34,active:true,chasing:true};assert.equal(r.hideFromStalker(s),true);const restored=hydrate(JSON.parse(JSON.stringify(s)));const map=makeDream(0);for(let i=0;i<6;i++){assert.equal(advanceStalker(restored,map),false);assert.equal(restored.stalker.chasing,false);}assert.equal(restored.hiddenSteps,0);advanceStalker(restored,map);assert.equal(restored.stalker.chasing,true);});
