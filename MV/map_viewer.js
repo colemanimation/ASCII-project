@@ -31,11 +31,15 @@ let camX = 0; // tile units
 let camY = 0;
 let zoom = 16; // px per tile
 
-const ZOOM_MIN = 6;
+const ZOOM_MIN = 0.75;
 const ZOOM_MAX = 40;
 
 // Palette (matches your game tiles)
 const PALETTE = {
+  "-": "#547f87",
+  ":": "#ac976b",
+  "A": "#cad2c6",
+  "!": "#ead399",
   "≈": "#6f849a",
   "~": "#7f93a8",
   ".": "#bdbdbd",
@@ -120,8 +124,8 @@ function fitToScreen() {
   const viewW = window.innerWidth;
   const viewH = Math.max(0, window.innerHeight - uiH - barH);
 
-  const zX = Math.floor(viewW / mapW);
-  const zY = Math.floor(viewH / mapH);
+  const zX = viewW / mapW;
+  const zY = viewH / mapH;
   zoom = clamp(Math.min(zX, zY), ZOOM_MIN, ZOOM_MAX);
 
   camX = 0;
@@ -274,6 +278,7 @@ fileInput.addEventListener("change", async (e) => {
   if (!f) return;
   labelEl.textContent = `Opening ${f.name}...`;
   const text = await f.text();
+  undoStack.length = 0;
   parseMapText(text);
   fitToScreen();
 });
@@ -420,3 +425,6 @@ rebuildBrushSizeUI();
 
 window.addEventListener("resize", resize);
 resize();
+
+// Open the current atlas by default; arbitrary text maps still work via Open.
+fetch('../data/maps/lantern_coast.txt').then(r=>{if(!r.ok)throw new Error('Map unavailable');return r.text();}).then(text=>{parseMapText(text);fitToScreen();}).catch(()=>{labelEl.textContent='Open a text map to begin';});

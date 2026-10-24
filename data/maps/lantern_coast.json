@@ -1,0 +1,279 @@
+{
+  "title": "The Lantern Coast",
+  "width": 280,
+  "height": 116,
+  "spawn": {
+    "x": 44,
+    "y": 68
+  },
+  "places": [
+    {
+      "id": "bracken",
+      "name": "Brackenport",
+      "kind": "harbor",
+      "x": 44,
+      "y": 66,
+      "region": "The Verdant Reach",
+      "tag": "A light in every window",
+      "description": "Tarred rope, wet cobblestones, and bread cooling on a windowsill. Every expedition begins at the harbor.",
+      "person": "Mara, the harbor keeper",
+      "lines": [
+        "The old lights have gone quiet. Three beacons, three shores. We used to navigate by their song.",
+        "Take my folding skiff. It opens itself when your boots meet the water. The roads will carry you inland.",
+        "Wake the lights at Mosswatch, Frostspire, and the Sunken Bell. Then climb to the observatory."
+      ],
+      "glyph": "H"
+    },
+    {
+      "id": "mosswatch",
+      "name": "Mosswatch",
+      "kind": "beacon",
+      "x": 55,
+      "y": 43,
+      "region": "The Verdant Reach",
+      "tag": "The western lantern",
+      "description": "Roots hold this watchtower together. Somewhere inside, a little green flame is still waiting.",
+      "person": "The keeper of roots",
+      "lines": [
+        "A lantern is only a promise someone has kept.",
+        "The western light answers. Across the trees, windows begin to glow."
+      ],
+      "glyph": "!"
+    },
+    {
+      "id": "hollow",
+      "name": "Hollowmere",
+      "kind": "village",
+      "x": 82,
+      "y": 71,
+      "region": "The Verdant Reach",
+      "tag": "The village under the willows",
+      "description": "Wooden houses stand above the marsh on stilts. Their reflections seem to have an extra floor.",
+      "person": "Old Fen",
+      "lines": [
+        "The lake east of here was not always a lake. The hill simply opened one night.",
+        "I have been fishing here for sixty years. I have never caught the same kind of fish twice."
+      ],
+      "glyph": "o"
+    },
+    {
+      "id": "caldera",
+      "name": "The Glass Eye",
+      "kind": "wonder",
+      "x": 98,
+      "y": 63,
+      "region": "The Verdant Reach",
+      "tag": "A sky caught in stone",
+      "description": "A perfectly still lake fills the mouth of an extinct volcano. The stars appear here before they appear overhead.",
+      "person": "A line in your field journal",
+      "lines": [
+        "Nothing stirs. Even the skiff leaves no wake.",
+        "You draw the circle carefully. Somehow it comes out as an eye."
+      ],
+      "glyph": "O"
+    },
+    {
+      "id": "northgate",
+      "name": "Northgate",
+      "kind": "village",
+      "x": 87,
+      "y": 35,
+      "region": "The Pale Crown",
+      "tag": "The last warm hearth",
+      "description": "A narrow pass opens onto a cluster of steep roofs. Smoke hangs low against the snow.",
+      "person": "Iven, a passing courier",
+      "lines": [
+        "The high peaks are impassable. Follow the pale road through the pass.",
+        "Frostspire is across the eastern strait. Best sail before the fog rolls in."
+      ],
+      "glyph": "o"
+    },
+    {
+      "id": "frostspire",
+      "name": "Frostspire",
+      "kind": "beacon",
+      "x": 157,
+      "y": 29,
+      "region": "The Pale Crown",
+      "tag": "The northern lantern",
+      "description": "A tower of black stone rises from a white ridge. Snow falls upward around its crown.",
+      "person": "The keeper of snow",
+      "lines": [
+        "I kept a place for you by the fire. I knew you would arrive.",
+        "The northern light answers. For a moment, every snowflake is a tiny star."
+      ],
+      "glyph": "!"
+    },
+    {
+      "id": "wayfarer",
+      "name": "Wayfarer's Rest",
+      "kind": "harbor",
+      "x": 150,
+      "y": 60,
+      "region": "The Sundered Kingdom",
+      "tag": "Where all the roads disagree",
+      "description": "A crooked inn leans into the sea wind. Travelers have scratched a hundred maps into its tables.",
+      "person": "Pip, the innkeeper",
+      "lines": [
+        "Our beds are dry, our soup is hot, and our directions are mostly correct.",
+        "Three old lights. One observatory. That is a story with an ending, if you keep walking."
+      ],
+      "glyph": "H"
+    },
+    {
+      "id": "ruins",
+      "name": "The Empty Court",
+      "kind": "ruin",
+      "x": 156,
+      "y": 79,
+      "region": "The Sundered Kingdom",
+      "tag": "A kingdom without a king",
+      "description": "The walls have fallen, but the garden still blooms. Someone tends it. No one has seen them.",
+      "person": "Words beneath a broken crown",
+      "lines": [
+        "WE BUILT OUR WALLS TO KEEP THE WORLD OUT.",
+        "The inscription ends there. A small flower grows through the final letter."
+      ],
+      "glyph": "#"
+    },
+    {
+      "id": "observatory",
+      "name": "The Observatory",
+      "kind": "observatory",
+      "x": 184,
+      "y": 55,
+      "region": "The Sundered Kingdom",
+      "tag": "The place the stars remember",
+      "description": "A brass telescope points at a dark patch of sky. Its three empty lenses are shaped like lantern flames.",
+      "person": "The star cartographer",
+      "lines": [
+        "When the three beacons burn, the old sky will find its way home.",
+        "You do not need to conquer a world to leave it brighter."
+      ],
+      "glyph": "@"
+    },
+    {
+      "id": "cedar",
+      "name": "Cedarhaven",
+      "kind": "harbor",
+      "x": 235,
+      "y": 29,
+      "region": "The Amber Coast",
+      "tag": "The town that smells of rain",
+      "description": "Tall cedars shelter a little harbor. Paper lanterns carry the names of ships that never came home.",
+      "person": "Sela, a boatwright",
+      "lines": [
+        "The desert begins where the river forgets its name. Follow it south.",
+        "If you hear a bell beneath the dunes, you are getting close."
+      ],
+      "glyph": "H"
+    },
+    {
+      "id": "bell",
+      "name": "The Sunken Bell",
+      "kind": "beacon",
+      "x": 250,
+      "y": 74,
+      "region": "The Amber Coast",
+      "tag": "The eastern lantern",
+      "description": "Only the belfry remains above the sand. A cool wind rises from its buried doorway.",
+      "person": "The keeper of sand",
+      "lines": [
+        "We buried the city. We could not bury its song.",
+        "The eastern light answers. Somewhere beneath your feet, a bell rings once."
+      ],
+      "glyph": "!"
+    },
+    {
+      "id": "oasis",
+      "name": "Lastwater",
+      "kind": "village",
+      "x": 242,
+      "y": 69,
+      "region": "The Amber Coast",
+      "tag": "Shade at the end of the road",
+      "description": "A ring of palms surrounds a spring so clear it looks empty. The tea is much stronger than it looks.",
+      "person": "Toma, the tea seller",
+      "lines": [
+        "Everyone asks how far to the next town. Nobody asks how long to the next good cup of tea.",
+        "You may refill your flask. The spring belongs to whoever is thirsty."
+      ],
+      "glyph": "o"
+    },
+    {
+      "id": "choir",
+      "name": "The Sleeping Choir",
+      "kind": "wonder",
+      "x": 233,
+      "y": 105,
+      "region": "The Drift Isles",
+      "tag": "An island humming in its sleep",
+      "description": "Seven stones lean toward the sea. At low tide, the water between them begins to hum.",
+      "person": "A line in your field journal",
+      "lines": [
+        "You stay for a while. There is no particular reason to leave.",
+        "One of the stones is warm to the touch."
+      ],
+      "glyph": "&"
+    },
+    {
+      "id": "wreck",
+      "name": "The Paper Saint",
+      "kind": "ruin",
+      "x": 204,
+      "y": 103,
+      "region": "The Drift Isles",
+      "tag": "The ship that sailed too far",
+      "description": "A shipwreck rests on the island like a beached cathedral. Flowers grow from the captain's desk.",
+      "person": "A water-stained logbook",
+      "lines": [
+        "DAY 114. The charts end here.",
+        "DAY 115. We have decided to continue."
+      ],
+      "glyph": "%"
+    }
+  ],
+  "regions": [
+    {
+      "name": "THE VERDANT REACH",
+      "x": 71,
+      "y": 57
+    },
+    {
+      "name": "THE PALE CROWN",
+      "x": 79,
+      "y": 12
+    },
+    {
+      "name": "THE SUNDERED KINGDOM",
+      "x": 165,
+      "y": 88
+    },
+    {
+      "name": "THE AMBER COAST",
+      "x": 244,
+      "y": 56
+    },
+    {
+      "name": "THE DRIFT ISLES",
+      "x": 222,
+      "y": 114
+    },
+    {
+      "name": "THE HUSHED SEA",
+      "x": 78,
+      "y": 110
+    },
+    {
+      "name": "THE NARROW SEA",
+      "x": 127,
+      "y": 67
+    },
+    {
+      "name": "THE SILVER STRAIT",
+      "x": 204,
+      "y": 17
+    }
+  ],
+  "seed": 732190
+}
