@@ -26,6 +26,15 @@ Combat, shops, equipment, selling, inns, dream levels and powers, dialogue choic
 
 ## Controls and phones
 
+Mara has four generated mouth poses converted into 64 x 38 printable ASCII
+frames. Her mouth follows the typewriter text, pauses at punctuation, and
+closes when a line ends. **Menu > Mara's warning** replays the conversation
+without resetting a journey. **Show line** (or Space / Enter) reveals the rest
+immediately. Longer conversations have short pages so phones never need to
+scroll. Text chatter has its own mute button and remembers the setting;
+background music remains a separate switch. Reduced-motion mode shows each
+line immediately. Closing, skipping, or hiding a conversation stops its sound.
+
 Arrow keys / WASD move. E / Enter interacts. I opens inventory, M the map or local plan, J the journal, and Esc the menu. On a phone, hold the direction buttons or tap a destination. Tap a person or service to approach it. Tap a landmark on the world map to travel there. Ordinary encounters interrupt travel.
 
 Local walking views follow you. **Plan** shows the entire town or dungeon; tap a reachable destination to return to walking. The interface fits one screen, including small phones, without page scrolling.
@@ -48,6 +57,26 @@ node scripts/ascii-kit.mjs compile data/towns/bracken.blueprint.json my-village
 The export command writes mockups, blueprints and collision data under `data/towns/` (or `dist/data/towns/` in a Sites checkout). `tileset.txt` is the printable stamp sheet. Compiling a custom blueprint writes `my-village.txt` and `my-village.json`; it does not replace a shipped town until its blueprint is integrated into `js/towns.js`.
 
 ## Development
+
+### Portrait conversion
+
+The generated source poses, 64 x 64 normalized images, ASCII text frames, and
+exact built-in image-generation prompts are in `art/portraits/mara/`. Run:
+
+```sh
+python scripts/build-mara-portraits.py
+```
+
+This requires Pillow. It calibrates character density against the actual
+Fever Terminal font, corrects the character-cell aspect ratio, and locks all
+characters outside a 16 x 6 mouth rectangle to the original pose. It writes
+`js/portraits.js` (or `dist/js/portraits.js`) and `docs/mara-mouth-poses.png`.
+The browser renders the frames as text; the source PNGs are not loaded by the
+game. `scripts/portrait_to_ascii.py` also converts other portraits via its CLI.
+`js/dialogue.js` owns the reveal/animation clock and `js/text-sound.js` makes
+the short square-wave chatter locally through Web Audio.
+
+### Game source
 
 No production dependencies or build step. Serve the repository over HTTP and open `index.html`. Run `npm test`. In a Sites checkout, static files live in `dist/`; scripts and tests support both layouts.
 
