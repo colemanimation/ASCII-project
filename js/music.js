@@ -12,7 +12,23 @@ export class ChipPlayer{
   if(!this.song||!this.output.ready)return;
   if(this.next<this.ctx.currentTime-.2)this.next=this.ctx.currentTime+.025;
   const song=this.song,dur=60/song.bpm/2;
-  while(this.next<this.ctx.currentTime+.12){const i=this.step,chord=song.chords[Math.floor(i/8)%song.chords.length];this.note(song.melody[i%song.melody.length],this.next,dur*1.5,'triangle',.21);this.note(chord[i%chord.length]+12,this.next,dur*.7,'sine',.12);if(i%4===0)this.note(chord[0]-12,this.next,dur*3.5,'triangle',.18);this.next+=dur;this.step++;}
+  while(this.next<this.ctx.currentTime+.12){if(song.arranged){this.arrangedStep(song,this.step,this.next,dur);this.next+=dur;this.step++;continue;}const i=this.step,chord=song.chords[Math.floor(i/8)%song.chords.length];this.note(song.melody[i%song.melody.length],this.next,dur*1.5,'triangle',.21);this.note(chord[i%chord.length]+12,this.next,dur*.7,'sine',.12);if(i%4===0)this.note(chord[0]-12,this.next,dur*3.5,'triangle',.18);this.next+=dur;this.step++;}
+ }
+ arrangedStep(song,step,time,dur){
+  const pos=step%song.barSteps,bar=Math.floor(step/song.barSteps)%song.chords.length,chord=song.chords[bar];
+  const event=song.events.find(e=>e.at===step%song.length);
+  if(event){
+   this.note(event.note,time,dur*event.length*.94,'triangle',song.leadVolume);
+   this.note(event.note+12,time,dur*Math.min(2,event.length),'sine',song.leadVolume*.12);
+   this.note(event.note,time+dur*1.5,dur*Math.min(3,event.length),'sine',song.leadVolume*.19);
+  }
+  const pattern=bar%2?[2,1,3,0,2,1]:[0,2,1,3,2,1];
+  if(pos%2===0&&!(bar===7&&pos>=10))this.note(chord[pattern[pos/2]]+12,time,dur*.88,'sine',song.arpVolume);
+  if(pos===0||pos===6)this.note(chord[pos===0?0:2]-12,time,dur*5.3,'triangle',.22);
+  if(pos===0)for(const n of chord.slice(1,3))this.note(n,time,dur*9,'sine',.035);
+  // A quiet answering voice enters on every other pass through the melody.
+  if(song.counter!==false&&Math.floor(step/song.length)%2===1&&(pos===3||pos===9))
+   this.note(chord[pos===3?1:2]+24,time,dur*2.5,'sine',.07);
  }
  stop(){clearInterval(this.timer);this.timer=null;this.song=null;for(const n of this.nodes){try{n.stop();}catch{}}this.nodes.clear();}
  suspend(){this.output.suspend();}

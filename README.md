@@ -1,6 +1,17 @@
-# Feverwake
+# Somnia
 
 An ASCII RPG about a world whose dreams are becoming infected.
+
+The opening tells the order's creation fable: a goddess builds the world, her
+jealous brother destroys it, and she preserves it in her dying dream. The
+keepers of Somnia guard the passages that mortal dreams open into the Great
+Dream. "Or so the tale is told" leaves the truth of that account unresolved.
+
+Four generated illustrations become six short, skippable ASCII story cards.
+The title screen follows the fable; **Menu > Opening fable** replays it without
+resetting a journey. The narration and illustration dissolve respect reduced
+motion. The music uses an original eight-bar lullaby in 6/8, with a quiet
+answering voice on alternate repeats and an altered version inside dreams.
 
 **Play:** https://colemanimation.github.io/ASCII-project/
 
@@ -13,6 +24,13 @@ The waking world is the Lantern Coast, a 280 x 116 character atlas with 14 landm
 The game uses a black background, an original 5x7 bitmap font, printable ASCII artwork, text window frames, bracketed commands, and character health bars. Map markers and travel paths are characters too. There are no vector circles, glow effects, gradient panels, or modern button chrome in the game.
 
 Six distinct 64 x 40 towns have shops, inns, dream wards, conversations, ASCII portraits, and roaming residents. Brackenport has a fish quay, market stalls, gardens, laundry and cottages. Other settlements use stilt bridges, snowy fortifications, caravan tents, and cedar docks. Residents walk routes, pause at their stops, avoid each other, and wait when you approach. Service counters stay put. Water and chimney smoke animate with character changes.
+
+People now occupy two character rows: a turning head above a consistent body.
+Clothing distinguishes the player, Mara, travelers, fishers, workers, and
+children. Movement still uses one tile at the feet; the head can overlap
+scenery, and figures draw in foot order. Tap either half to approach and talk.
+The [figure sheet](https://colemanimation.github.io/ASCII-project/figures.html)
+shows all four directions for the main town figures.
 
 Three room-based nightmares have furniture, clues, loot, alternate routes, locks, and mechanisms:
 
@@ -47,7 +65,12 @@ Arrow keys / WASD move. E / Enter interacts. I opens inventory, M the map or loc
 
 Local walking views follow you. **Plan** shows the entire town or dungeon; tap a reachable destination to return to walking. The interface fits one screen, including small phones, without page scrolling.
 
-Town symbols: `@` you, `S` shop, `I` inn, `Q` sleeper, letters for residents, `>` exit. Dream symbols: `?` clue, `k` key, `L` mechanism, `+` locked door, `$` chest, `B` guardian, `!` memory anchor, `h` hiding place, `&` visitor, `>` wake.
+The player has an `O` head over an `X` body when facing forward; side-facing
+heads use `<` and `>`, and north-facing heads use `^`. Building signs remain
+`S` shop, `I` inn, and `Q` sleeper ward. Dream symbols: `?` clue, `k` key,
+`L` mechanism, `+` locked door, `$` chest, `!` memory anchor, `h` hiding place,
+and `>` wake. Guardians and the tall visitor are two-row figures too. The
+overworld and blueprint exports retain their small map markers.
 
 Open the game in Safari and choose **Share > Add to Home Screen**, or use **Install app** in a supporting Android browser. After one successful online load, the service worker caches the game and font for offline play. Saves belong to the current browser or installed app; use **Menu > Export save** for a portable backup. Existing Feverwake saves retain inventory, story, choices and combat progress. Saves from the older local layouts resume at a safe entrance; defeated guardians remain defeated.
 
@@ -65,6 +88,16 @@ node scripts/ascii-kit.mjs compile data/towns/bracken.blueprint.json my-village
 The export command writes mockups, blueprints and collision data under `data/towns/` (or `dist/data/towns/` in a Sites checkout). `tileset.txt` is the printable stamp sheet. Compiling a custom blueprint writes `my-village.txt` and `my-village.json`; it does not replace a shipped town until its blueprint is integrated into `js/towns.js`.
 
 ## Development
+
+### Opening fable
+
+`art/fable/` contains all four unmodified generated source PNGs, exact built-in
+image-generation prompts, converted text plates, and ASCII previews. Run
+`python scripts/build-fable.py` to rebuild the 112 x 38 character plates and
+`docs/somnia-fable-ascii.png`. Only the compact text module is shipped to the
+game; the large source PNGs are not downloaded during play. The conversion
+uses the same font-calibrated pipeline as Mara's portrait. `js/fable.js`
+contains the six narration cards and the skippable reveal controller.
 
 ### Portrait conversion
 
@@ -94,6 +127,9 @@ No production dependencies or build step. Serve the repository over HTTP and ope
 - `js/dungeons.js`: room layouts, clues, gates, keys, mechanisms and persistent dream changes.
 - `js/rpg.js`: combat, economy, saves, pathfinding, residents and the pursuer.
 - `js/main.js`: input, dialogue, progression, UI and persistence.
+- `js/figures.js`: two-row bodies, directional heads, and unified hit areas.
+- `js/fable.js`, `js/fable-art.js`: the creation tale and generated ASCII plates.
+- `js/songs.js`, `js/music.js`: original scores, arranged voices, and Web Audio playback.
 - `js/render.js`, `js/scene.js`: character-only world and local renderers.
 - `js/terminal.js`: responsive ASCII frames and text meters.
 - `scripts/build-terminal-font.py`: rebuild the original CC0 font with Python fontTools.

@@ -2,31 +2,41 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#000000"><meta name="description" content="Feverwake. An ASCII role-playing game about infected dreams.">
-<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Feverwake">
+<meta name="theme-color" content="#000000"><meta name="description" content="Somnia. An ASCII role-playing game about infected dreams.">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Somnia">
 <link rel="manifest" href="./manifest.webmanifest"><link rel="icon" href="./icons/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
 <link rel="preload" href="./fonts/fever-terminal.ttf" as="font" type="font/ttf" crossorigin>
-<link rel="stylesheet" href="./style.css?v=compact-1"><link rel="stylesheet" href="./dialogue.css?v=compact-1"><title>FEVERWAKE / An ASCII dream RPG</title>
+<link rel="stylesheet" href="./style.css?v=somnia-1"><link rel="stylesheet" href="./dialogue.css?v=somnia-1"><link rel="stylesheet" href="./fable.css?v=somnia-1"><title>SOMNIA / An ASCII dream RPG</title>
 </head>
 <body>
 <main id="game" class="game" hidden>
- <header class="masthead"><button id="title-button" class="wordmark" aria-label="Open game menu">FEVERWAKE<span>A DREAM INFECTION</span></button><div class="chapter" id="chapter">I / THE SLEEPING SICKNESS</div><button id="sound" aria-label="Toggle sound">Sound off</button></header>
+ <header class="masthead"><button id="title-button" class="wordmark" aria-label="Open game menu">SOMNIA<span>A DREAM INFECTION</span></button><div class="chapter" id="chapter">I / THE SLEEPING SICKNESS</div><button id="sound" aria-label="Toggle sound">Sound off</button></header>
  <section class="hud frame" aria-label="Traveler status"><div><span class="stat-label">HP</span><strong id="hp-text">40/40</strong><span class="meter" id="hp-bar">[########]</span></div><div><span class="stat-label">FP</span><strong id="mp-text">12/12</strong><span class="meter" id="mp-bar">[########]</span></div><div class="stat-simple"><span class="stat-label">LV</span><strong id="level">01</strong></div><div class="stat-simple"><span class="stat-label">GOLD</span><strong id="gold">38</strong></div></section>
  <div class="scene-bar"><div><span id="realm" class="eyebrow">WAKING WORLD</span><h1 id="location">The Lantern Coast</h1></div><div id="scene-tools"><button id="atlas">Map</button><button id="journal">Journal</button></div></div>
  <section class="viewport frame" aria-label="Game scene"><canvas id="map" aria-label="ASCII game map. Use the directional controls to move." role="img"></canvas><div id="map-caption" class="map-caption">@ you / H harbor / o town</div><div id="dread" class="dread" hidden></div><div id="zoom-controls" class="zoom-controls"><button id="zoom-out" aria-label="Zoom out">-</button><button id="zoom-in" aria-label="Zoom in">+</button></div></section>
  <div class="message frame" role="status" aria-live="polite"><span id="message"></span></div>
  <footer class="controls"><div class="dpad" aria-label="Movement"><button data-dir="up" aria-label="Move north">^</button><button data-dir="left" aria-label="Move west">&lt;</button><button data-dir="down" aria-label="Move south">v</button><button data-dir="right" aria-label="Move east">&gt;</button></div><div class="actions"><button id="interact" class="primary">Interact <kbd>E</kbd></button><button id="bag">Inventory <kbd>I</kbd></button><button id="menu">Menu <kbd>Esc</kbd></button></div><div class="keyboard-hint">WASD / ARROWS: WALK<br>E: USE / M: MAP / I: BAG<br>OR POINT AND CLICK</div></footer>
 </main>
-<section id="intro" class="intro" aria-label="Feverwake title screen"><canvas id="intro-art" aria-hidden="true"></canvas><div class="intro-content frame"><div class="intro-kicker">AN ASCII ROLE-PLAYING GAME</div><pre class="title-art" aria-label="Feverwake"> ____  _____ __   __ _____ ____
-|  __|| ____|\ \ / /| ____|  _ \
-| |_  |  _|   \ V / |  _| | |_) |
-|  _| | |___   \ /  | |___|  _ &lt;
-|_|   |_____|   V   |_____|_| \_\
-__        __    _    _  _______
-\ \  /\  / /   / \  | |/ / ___|
- \ \/  \/ /   / _ \ | ' /|  _|
-  \  /\  /   / ___ \| . \| |___
-   \/  \/   /_/   \_\_|\_\_____|</pre><h1 class="visually-hidden">FEVERWAKE</h1><p id="intro-line">At first, it was only a bad dream.</p><div class="intro-actions"><button id="continue" class="primary" hidden>Continue</button><button id="begin" class="primary">Begin</button></div><span id="loading" class="intro-footer">Loading the coast...</span></div><div class="intro-bottom">@ ONE SLEEPER AT A TIME <span>EST. IN A BAD DREAM</span></div></section>
+<section id="intro" class="intro is-fable" aria-label="Somnia opening">
+ <canvas id="intro-art" aria-hidden="true"></canvas>
+ <div id="intro-fable" class="fable-frame frame">
+  <div class="fable-top"><span>AN OLD TALE OF SOMNIA</span><button id="fable-sound" aria-label="Toggle sound">Sound off</button></div>
+  <canvas id="fable-art" class="fable-art" aria-hidden="true"></canvas>
+  <div class="fable-copy-wrap"><p id="fable-copy" class="fable-copy" aria-hidden="true"></p><p id="fable-accessible" class="visually-hidden" aria-live="polite" aria-atomic="true"></p></div>
+  <div class="fable-actions"><button id="fable-skip">Skip</button><button id="fable-next">Continue &gt;</button></div>
+ </div>
+ <div id="intro-title" class="intro-content frame" hidden><div class="intro-kicker">AN ASCII DREAM RPG</div>
+ <pre class="title-art somnia-title" aria-label="Somnia">  ____   ___  __  __ _   _ ___    _
+ / ___| / _ \|  \/  | \ | |_ _|  / \
+ \___ \| | | | |\/| |  \| || |  / _ \
+  ___) | |_| | |  | | |\  || | / ___ \
+ |____/ \___/|_|  |_|_| \_|___/_/   \_\</pre>
+ <h1 class="visually-hidden">SOMNIA</h1><p id="intro-line">Keep the dream alive.</p>
+ <div class="intro-actions"><button id="continue" class="primary" hidden>Continue</button><button id="begin" class="primary">Begin</button></div>
+ <div class="intro-title-extras"><button id="fable-replay">The first dream</button><button id="intro-sound" aria-label="Toggle sound">Sound off</button></div>
+ <span id="loading" class="intro-footer">Loading the coast...</span></div>
+ <div class="intro-bottom">ONE SLEEPER AT A TIME <span>THE DREAM MUST ENDURE</span></div>
+</section>
 <div id="overlay" class="overlay" hidden><section id="dialog" class="dialog frame" role="dialog" aria-modal="true" aria-labelledby="dialog-title"><header><span id="dialog-tag" class="eyebrow"></span><button id="dialog-close" aria-label="Close dialog">x</button></header><h2 id="dialog-title"></h2><div id="dialog-content"></div><div id="dialog-actions" class="dialog-actions"></div></section></div>
-<script type="module" src="./js/main.js?v=compact-1"></script>
+<script type="module" src="./js/main.js?v=somnia-1"></script>
 </body></html>

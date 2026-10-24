@@ -1,5 +1,5 @@
 {
-  "id":"./", "name":"Feverwake", "short_name":"Feverwake",
+  "id":"./", "name":"Somnia", "short_name":"Somnia",
   "description":"An ASCII RPG about a world whose dreams are becoming infected.",
   "start_url":"./", "scope":"./", "display":"standalone", "orientation":"portrait-primary",
   "background_color":"#000000", "theme_color":"#000000",

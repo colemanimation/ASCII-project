@@ -14,6 +14,6 @@ for i,char in enumerate('+---------+'):
  glyph(char,78+i*33,103,55,'#999');glyph(char,78+i*33,447,55,'#999')
 for y in [151,199,247,295,343,391]:
  glyph('|',78,y,55,'#999');glyph('|',408,y,55,'#999')
-glyph('F',191,358,280)
+glyph('S',191,358,280)
 parts.append('</svg>');svg=''.join(parts);(base/'icons/icon.svg').write_text(svg)
 for name,size in [('icon-192.png',192),('icon-512.png',512),('apple-touch-icon.png',180)]:raster.resize((size,size),Image.Resampling.NEAREST).save(base/'icons'/name)

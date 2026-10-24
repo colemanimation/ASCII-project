@@ -30,6 +30,6 @@ export function stamp(map,name,x,y,options={}){const tile=STAMPS[name];if(!tile)
  return {x,y,width,height:tile.art.length};
 }
 export function object(map,x,y,type,glyph,label,extra={}){put(map,x,y,glyph,extra.walk!==false);const o={x,y,type,glyph,label,...extra};map.objects.push(o);return o;}
-export function actor(map,x,y,glyph,name,route,type='townsperson',line='Good day to you.'){const a={x,y,glyph,name,label:name,type,route:route.map(([x,y])=>({x,y})),waypoint:0,pause:0,line,mobile:true};map.objects.push(a);map.actors.push(a);return a;}
+export function actor(map,x,y,glyph,name,route,type='townsperson',line='Good day to you.'){const a={x,y,glyph,name,label:name,type,route:route.map(([x,y])=>({x,y})),waypoint:0,pause:0,facing:'down',line,mobile:true};map.objects.push(a);map.actors.push(a);return a;}
 export function textMap(map,includeActors=true){const grid=map.grid.map(row=>[...row]);for(const o of map.objects)if(!o.mobile||includeActors)grid[o.y][o.x]=o.glyph||grid[o.y][o.x];if(map.spawn)grid[map.spawn.y][map.spawn.x]='@';return grid.map(r=>r.join('')).join('\n')+'\n';}
 export function validateMap(map){if(map.grid.some(r=>r.length!==map.width)||map.grid.length!==map.height)throw new Error('Map dimensions differ');if(!/^[\x20-\x7e\n]+$/.test(textMap(map)))throw new Error('ASCII only');for(const o of map.objects)if(!map.grid[o.y]?.[o.x])throw new Error('Object outside map');return true;}

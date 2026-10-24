@@ -5,6 +5,7 @@ const root=existsSync(new URL('../dist/index.html',import.meta.url))?'../dist/':
 const {AudioOutput}=await import(new URL(root+'js/audio-output.js',import.meta.url));
 const {TextSound,chatterPitch}=await import(new URL(root+'js/text-sound.js',import.meta.url));
 const {ChipPlayer}=await import(new URL(root+'js/music.js',import.meta.url));
+const {SONGS}=await import(new URL(root+'js/songs.js',import.meta.url));
 function environment(stored=null){
  const contexts=[],nodes=[],events=[],storage=new Map(stored?[['feverwake-sound',stored]]:[]);
  const parameter=()=>({value:0,setValueAtTime(){},linearRampToValueAtTime(v){events.push(['gain',v]);},exponentialRampToValueAtTime(){}});
@@ -54,4 +55,14 @@ test('muting while resume is pending cannot turn sound back on',async()=>{
   let release;const original=window.AudioContext.prototype.resume;window.AudioContext.prototype.resume=function(){return new Promise(resolve=>release=()=>{this.state='running';resolve();});};
   const output=new AudioOutput,pending=output.unlock();await output.setEnabled(false);release();assert.equal(await pending,false);assert.equal(output.ready,false);window.AudioContext.prototype.resume=original;
  }finally{e.restore();}
+});
+test('the arranged lullaby schedules finite audible voices through a full loop and stops them',async()=>{
+ const e=environment();let music;try{
+  const output=new AudioOutput;await output.unlock();music=new ChipPlayer(output);music.play(SONGS.fable);
+  for(let i=0;i<420;i++){output.ctx.currentTime+=.1;music.schedule();}
+  assert.ok(music.step>SONGS.fable.length);assert.ok(e.nodes.length>100);
+  for(const node of e.nodes)assert.ok(Number.isFinite(node.frequency.value)&&node.frequency.value>20&&node.frequency.value<10000);
+  for(const [kind,time] of e.events)if(kind==='start'||kind==='stop')assert.ok(Number.isFinite(time)&&time>=1);
+  music.stop();assert.equal(music.nodes.size,0);assert.equal(music.timer,null);assert.equal(music.song,null);
+ }finally{music?.stop();e.restore();}
 });

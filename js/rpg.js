@@ -1,6 +1,7 @@
-export {makeTown} from './towns.js?v=compact-1';
-export {makeDream,syncDreamMap,operateDream,roomAt} from './dungeons.js?v=compact-1';
-// Feverwake: deterministic game rules. The UI supplies randomness for encounters.
+import {facingFrom,FACINGS} from './figures.js?v=somnia-1';
+export {makeTown} from './towns.js?v=somnia-1';
+export {makeDream,syncDreamMap,operateDream,roomAt} from './dungeons.js?v=somnia-1';
+// Somnia: deterministic game rules. The UI supplies randomness for encounters.
 export const ITEMS={
  potion:{name:'Red cordial',kind:'use',price:12,heal:26,description:'Restores 26 HP.'},
  tonic:{name:'Lucidity tonic',kind:'use',price:16,mana:9,description:'Restores 9 focus.'},
@@ -57,9 +58,9 @@ export const maxMp=s=>12+(s.hero.level-1)*3;
 export const attackPower=s=>5+(ITEMS[s.hero.weapon]?.power||0)+(isDream(s)?s.hero.level*2:0);
 export const defensePower=s=>ITEMS[s.hero.armor]?.power||0;
 export const xpNeeded=level=>16+level*8;
-export function newGame(){return{version:2,layoutVersion:3,dreamFlags:[],scene:'world',player:{x:44,y:68},local:{x:16,y:17},town:'bracken',dream:0,hero:{hp:40,mp:12,level:1,xp:0,gold:38,weapon:'wooden_blade',armor:'traveler_coat',empathy:0,courage:0},bag:{potion:3,tonic:1,salt:1,wooden_blade:1,traveler_coat:1},discovered:[],cleared:[],opened:[],defeated:[],choices:[],steps:0,encounterClock:0,dreamTicks:0,dread:0,hiddenSteps:0,stalker:{x:25,y:17,active:false,chasing:false},combat:null,stage:'illness',lastTown:'bracken',message:'Brackenport is just north of you. Find Mara in the square.'};}
+export function newGame(){return{version:2,layoutVersion:3,facing:'down',dreamFlags:[],scene:'world',player:{x:44,y:68},local:{x:16,y:17},town:'bracken',dream:0,hero:{hp:40,mp:12,level:1,xp:0,gold:38,weapon:'wooden_blade',armor:'traveler_coat',empathy:0,courage:0},bag:{potion:3,tonic:1,salt:1,wooden_blade:1,traveler_coat:1},discovered:[],cleared:[],opened:[],defeated:[],choices:[],steps:0,encounterClock:0,dreamTicks:0,dread:0,hiddenSteps:0,stalker:{x:25,y:17,active:false,chasing:false},combat:null,stage:'illness',lastTown:'bracken',message:'Brackenport is just north of you. Find Mara in the square.'};}
 export function hydrate(raw){
- const s=newGame();if(raw?.version!==2)return s;s.layoutVersion=raw.layoutVersion===3?3:2;
+ const s=newGame();if(raw?.version!==2)return s;s.facing=FACINGS.includes(raw.facing)?raw.facing:'down';s.layoutVersion=raw.layoutVersion===3?3:2;
  const finite=(v,f,min=0,max=99999)=>Number.isFinite(v)?Math.max(min,Math.min(max,Math.floor(v))):f;
  for(const k of ['town','lastTown'])if(TOWN_IDS.includes(raw[k]))s[k]=raw[k];
  s.scene=['world','town','dream','finale'].includes(raw.scene)?raw.scene:'world';s.dream=finite(raw.dream,0,0,2);
@@ -127,7 +128,7 @@ export function advanceStalker(s,map){
  const aligned=s.stalker.x===s.local.x||s.stalker.y===s.local.y;
  let visible=aligned; if(aligned){const dx=Math.sign(s.local.x-s.stalker.x),dy=Math.sign(s.local.y-s.stalker.y);let x=s.stalker.x+dx,y=s.stalker.y+dy;while(x!==s.local.x||y!==s.local.y){if(!localWalkable(map,x,y)){visible=false;break;}x+=dx;y+=dy;}}
  if((visible&&distance<=11)||s.dread>=65||s.scene==='finale')s.stalker.chasing=true;
- if(s.stalker.chasing&&s.dreamTicks%(s.scene==='finale'?2:3)===0){const path=localRoute(map,s.stalker,s.local);if(path?.length)s.stalker={...s.stalker,...path[0]};}
+ if(s.stalker.chasing&&s.dreamTicks%(s.scene==='finale'?2:3)===0){const path=localRoute(map,s.stalker,s.local);if(path?.length)s.stalker={...s.stalker,facing:facingFrom(path[0].x-s.stalker.x,path[0].y-s.stalker.y,s.stalker.facing),...path[0]};}
  return s.stalker.x===s.local.x&&s.stalker.y===s.local.y;
 }
 
@@ -139,12 +140,12 @@ export function approachRoute(map,start,o){
 export function tickTown(map,state,target=null){
  if(state.scene!=='town')return false;let changed=false;
  for(const a of map.actors||[]){
-  if(Math.abs(a.x-state.local.x)+Math.abs(a.y-state.local.y)<=2||(a===target&&Math.abs(a.x-state.local.x)+Math.abs(a.y-state.local.y)<=6))continue;
+  if(Math.abs(a.x-state.local.x)+Math.abs(a.y-state.local.y)<=2||(a===target&&Math.abs(a.x-state.local.x)+Math.abs(a.y-state.local.y)<=6)){const facing=facingFrom(state.local.x-a.x,state.local.y-a.y,a.facing);if(a.facing!==facing){a.facing=facing;changed=true;}continue;}
   if(a.pause>0){a.pause--;continue;}
   const goal=a.route[a.waypoint%a.route.length],p=localRoute(map,a,goal);
   if(!p?.length){a.waypoint=(a.waypoint+1)%a.route.length;a.pause=2;continue;}
-  const next=p[0];if(map.actors.some(b=>b!==a&&b.x===next.x&&b.y===next.y)||state.local.x===next.x&&state.local.y===next.y)continue;
-  a.x=next.x;a.y=next.y;changed=true;
+  const next=p[0];if(map.actors.some(b=>b!==a&&b.x===next.x&&Math.abs(b.y-next.y)<2)||state.local.x===next.x&&state.local.y===next.y)continue;
+  a.facing=facingFrom(next.x-a.x,next.y-a.y,a.facing);a.x=next.x;a.y=next.y;changed=true;
  }
  return changed;
 }
