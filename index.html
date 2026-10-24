@@ -1,58 +1,22 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>ASCII Project</title>
-
-  <!-- iOS app-like behavior -->
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="theme-color" content="#000000">
-
-  <link rel="stylesheet" href="style.css">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0a1013"><meta name="description" content="Feverwake. A single-screen ASCII RPG about a world whose dreams are becoming infected.">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Feverwake">
+<link rel="manifest" href="./manifest.webmanifest"><link rel="icon" href="./icons/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+<link rel="stylesheet" href="./style.css"><title>Feverwake · An ASCII dream RPG</title>
 </head>
 <body>
-
-<div id="app">
-
-  <!-- TOP: map + side panel -->
-  <div id="top">
-    <pre id="map" class="panel"></pre>
-
-    <div id="side">
-      <pre id="portrait" class="panel small"></pre>
-      <pre id="inventory" class="panel small"></pre>
-    </div>
-  </div>
-
-  <!-- DIALOGUE -->
-  <pre id="dialogue" class="panel"></pre>
-
-  <!-- CONTROLS -->
-  <div id="controls" class="panel">
-    <div id="dpad">
-      <button data-dir="up">▲</button>
-      <div>
-        <button data-dir="left">◀</button>
-        <button data-dir="right">▶</button>
-      </div>
-      <button data-dir="down">▼</button>
-    </div>
-
-    <div id="buttons">
-      <button id="btnA">A</button>
-      <button id="btnB">B</button>
-    </div>
-
-    <div id="system">
-      <button id="btnSelect">Select</button>
-      <button id="btnStart">Start</button>
-    </div>
-  </div>
-
-</div>
-
-<script type="module" src="js/main.js"></script>
-</body>
-</html>
+<main id="game" class="game" hidden>
+ <header class="masthead"><button id="title-button" class="wordmark" aria-label="Open game menu">FEVERWAKE<span>AN ASCII DREAM RPG</span></button><div class="chapter" id="chapter">I / THE SLEEPING SICKNESS</div><button id="sound" class="quiet" aria-label="Toggle sound">Sound off</button></header>
+ <section class="hud" aria-label="Traveler status"><div><span class="stat-label">VITALITY</span><strong id="hp-text">40 / 40</strong><div class="meter"><i id="hp-bar"></i></div></div><div><span class="stat-label">FOCUS</span><strong id="mp-text">12 / 12</strong><div class="meter focus"><i id="mp-bar"></i></div></div><div class="stat-simple"><span class="stat-label">DREAM LV</span><strong id="level">01</strong></div><div class="stat-simple"><span class="stat-label">COINS</span><strong id="gold">38</strong></div></section>
+ <div class="scene-bar"><div><span id="realm" class="eyebrow">WAKING WORLD</span><h1 id="location">The Lantern Coast</h1></div><div id="scene-tools"><button id="atlas" class="quiet">Atlas</button><button id="journal" class="quiet">Journal</button></div></div>
+ <section class="viewport" aria-label="Game scene"><canvas id="map" aria-label="ASCII game map. Use the directional controls to move." role="img"></canvas><div id="map-caption" class="map-caption">@ you · H harbor · o town</div><div id="dread" class="dread" hidden></div><div id="zoom-controls" class="zoom-controls"><button id="zoom-out" aria-label="Zoom out">−</button><button id="zoom-in" aria-label="Zoom in">+</button></div></section>
+ <div class="message" id="message" role="status" aria-live="polite"></div>
+ <footer class="controls"><div class="dpad" aria-label="Movement"><button data-dir="up" aria-label="Move north">↑</button><button data-dir="left" aria-label="Move west">←</button><button data-dir="down" aria-label="Move south">↓</button><button data-dir="right" aria-label="Move east">→</button></div><div class="actions"><button id="interact" class="primary">Interact <kbd>E</kbd></button><button id="bag">Inventory <kbd>I</kbd></button><button id="menu" class="quiet">Menu <kbd>Esc</kbd></button></div><div class="keyboard-hint">WASD / arrows to walk<br>Tap a destination to travel</div></footer>
+</main>
+<section id="intro" class="intro" aria-label="Feverwake title screen"><canvas id="intro-art" aria-hidden="true"></canvas><div class="intro-content"><div class="intro-kicker">A WORLD ON THE OTHER SIDE OF SLEEP</div><h1>FEVERWAKE</h1><div class="intro-rule"><span>+ + +</span></div><p id="intro-line">At first, it was only a bad dream.</p><div class="intro-actions"><button id="continue" class="primary" hidden>Continue dream</button><button id="begin" class="primary">Begin</button></div><span id="loading" class="intro-footer">Preparing the world…</span></div><div class="intro-bottom">A CHARACTER AT A TIME <span>HEADPHONES OPTIONAL</span></div></section>
+<div id="overlay" class="overlay" hidden><section id="dialog" class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-title"><header><span id="dialog-tag" class="eyebrow"></span><button id="dialog-close" class="quiet" aria-label="Close dialog">×</button></header><h2 id="dialog-title"></h2><div id="dialog-content"></div><div id="dialog-actions" class="dialog-actions"></div></section></div>
+<script type="module" src="./js/main.js"></script>
+</body></html>

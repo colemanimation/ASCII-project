@@ -1,6 +1,11 @@
 {
   "maps": [
     {
+      "id": "lantern_coast",
+      "file": "lantern_coast.txt",
+      "name": "The Lantern Coast"
+    },
+    {
       "id": "test_continent",
       "file": "test_continent.txt",
       "name": "Test Continent (Original)"

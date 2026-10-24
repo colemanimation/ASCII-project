@@ -1,398 +1,80 @@
-// main.js
-import { CONFIG } from "./config.js";
-import { loadMap } from "./world.js";
-import { renderMapToPre, renderTitleToPre } from "./render.js";
-import { bindInput } from "./input.js";
-import { ChipPlayer } from "./music.js";
-import { SONGS } from "./songs.js";
-
-const els = {
-  map: document.getElementById("map"),
-  dialogue: document.getElementById("dialogue"),
-  portrait: document.getElementById("portrait"),
-  inventory: document.getElementById("inventory"),
-};
-
-const chip = new ChipPlayer();
-
-let state = {
-  map: null,
-
-  // mode: "boot" | "title" | "game"
-  mode: "boot",
-
-  title: {
-    frame: 0,
-    seed: 1337,
-    logoX: 0,
-    logoSpeed: -0.35, // right-to-left
-    logoLines: [
-      "██████╗ ██╗   ██╗███████╗██╗  ██╗██╗    ██╗ █████╗ ████████╗ ██████╗██╗  ██╗",
-      "██╔══██╗██║   ██║██╔════╝██║ ██╔╝██║    ██║██╔══██╗╚══██╔══╝██╔════╝██║  ██║",
-      "██║  ██║██║   ██║███████╗█████╔╝ ██║ █╗ ██║███████║   ██║   ██║     ███████║",
-      "██║  ██║██║   ██║╚════██║██╔═██╗ ██║███╗██║██╔══██║   ██║   ██║     ██╔══██║",
-      "██████╔╝╚██████╔╝███████║██║  ██╗╚███╔███╔╝██║  ██║   ██║   ╚██████╗██║  ██║",
-      "╚═════╝  ╚═════╝ ╚══════╝╚═╝  ╚═╝ ╚══╝╚══╝ ╚═╝  ╚═╝   ╚═╝    ╚═════╝╚═╝  ╚═╝",
-    ],
-    didInitX: false,
-  },
-
-  player: {
-    x: CONFIG.defaultSpawn.x,
-    y: CONFIG.defaultSpawn.y,
-    facing: CONFIG.defaultSpawn.facing,
-    skin: "#d7c2a1",
-    clothes: "#a9a9a9",
-  },
-
-  audio: {
-    ctx: null,
-    master: null,
-    isReady: false,
-    songStop: null,
-    currentSong: "none",
-  },
-};
-
-// -------------------- BOOT OVERLAY --------------------
-
-function createBootOverlay(onBoot) {
-  const overlay = document.createElement("div");
-  overlay.id = "bootOverlay";
-  overlay.style.position = "fixed";
-  overlay.style.inset = "0";
-  overlay.style.zIndex = "9999";
-  overlay.style.display = "flex";
-  overlay.style.alignItems = "center";
-  overlay.style.justifyContent = "center";
-  overlay.style.background = "#000";
-
-  const btn = document.createElement("button");
-  btn.textContent = "BOOT GAME";
-  btn.style.fontSize = "18px";
-  btn.style.padding = "14px 18px";
-  btn.style.border = "2px double #fff";
-  btn.style.background = "#000";
-  btn.style.color = "#fff";
-  btn.style.minWidth = "180px";
-  btn.style.minHeight = "56px";
-
-  btn.addEventListener("click", async () => {
-    btn.disabled = true;
-    btn.textContent = "BOOTING...";
-    try {
-      await onBoot();
-      overlay.remove();
-    } catch (e) {
-      btn.disabled = false;
-      btn.textContent = "BOOT GAME";
-      els.dialogue.textContent = String(e);
-    }
-  });
-
-  overlay.appendChild(btn);
-  document.body.appendChild(overlay);
-}
-
-// -------------------- AUDIO (CHIPTUNES) --------------------
-
-function midiToFreq(m) {
-  return 440 * Math.pow(2, (m - 69) / 12);
-}
-
-async function initAudio() {
-  if (state.audio.isReady) return;
-
-  const AudioCtx = window.AudioContext || window.webkitAudioContext;
-  if (!AudioCtx) throw new Error("WebAudio not supported in this browser.");
-
-  const ctx = new AudioCtx();
-  // iOS needs resume during user gesture, but we are inside click handler
-  if (ctx.state === "suspended") await ctx.resume();
-
-  const master = ctx.createGain();
-  master.gain.value = 0.12;
-  master.connect(ctx.destination);
-
-  state.audio.ctx = ctx;
-  state.audio.master = master;
-  state.audio.isReady = true;
-}
-
-function stopSong() {
-  if (state.audio.songStop) {
-    state.audio.songStop();
-    state.audio.songStop = null;
-  }
-  state.audio.currentSong = "none";
-}
-
-function playSong({ bpm, lead, bass }) {
-  stopSong();
-  const ctx = state.audio.ctx;
-  const master = state.audio.master;
-  if (!ctx || !master) return;
-
-  let step = 0;
-  const stepDur = (60 / bpm) / 4; // 16th notes
-  const startAt = ctx.currentTime + 0.02;
-
-  const makeVoice = (type) => {
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = type;
-    gain.gain.value = 0;
-    osc.connect(gain);
-    gain.connect(master);
-    osc.start();
-    return { osc, gain };
-  };
-
-  const vLead = makeVoice("square");
-  const vBass = makeVoice("triangle");
-
-  const env = (voice, t, dur, vol) => {
-    voice.gain.gain.cancelScheduledValues(t);
-    voice.gain.gain.setValueAtTime(0.0001, t);
-    voice.gain.gain.linearRampToValueAtTime(vol, t + 0.01);
-    voice.gain.gain.linearRampToValueAtTime(0.0001, t + Math.max(0.03, dur - 0.01));
-  };
-
-  const timer = setInterval(() => {
-    const t = startAt + step * stepDur;
-
-    const l = lead[step % lead.length];
-    const b = bass[step % bass.length];
-
-    if (l != null) {
-      vLead.osc.frequency.setValueAtTime(midiToFreq(l), t);
-      env(vLead, t, stepDur, 0.10);
-    } else {
-      vLead.gain.gain.setValueAtTime(0.0001, t);
-    }
-
-    if (b != null) {
-      vBass.osc.frequency.setValueAtTime(midiToFreq(b), t);
-      env(vBass, t, stepDur, 0.08);
-    } else {
-      vBass.gain.gain.setValueAtTime(0.0001, t);
-    }
-
-    step++;
-  }, stepDur * 1000);
-
-  state.audio.songStop = () => {
-    clearInterval(timer);
-    try { vLead.osc.stop(); } catch {}
-    try { vBass.osc.stop(); } catch {}
-  };
-}
-
-function playTitleMusic() {
-  state.audio.currentSong = "title";
-  // simple upbeat loop
-  playSong({
-    bpm: 132,
-    // 16-step pattern, null = rest
-    lead: [72, null, 76, null, 79, null, 76, null, 74, null, 76, null, 79, null, 83, null],
-    bass: [48, null, 48, null, 50, null, 50, null, 43, null, 43, null, 45, null, 45, null],
-  });
-}
-
-function playOverworldMusic() {
-  state.audio.currentSong = "overworld";
-  playSong({
-    bpm: 120,
-    lead: [76, 79, 81, null, 79, 76, 74, null, 72, 74, 76, null, 74, 72, null, null],
-    bass: [40, null, 43, null, 45, null, 43, null, 38, null, 40, null, 43, null, 35, null],
-  });
-}
-
-// -------------------- GAME LOGIC --------------------
-
-function getStartMapName() {
-  if (!CONFIG.useUrlMapOverride) return CONFIG.defaultMap;
-  const params = new URLSearchParams(location.search);
-  const m = params.get("map");
-  return m || CONFIG.defaultMap;
-}
-
-function isBlocked(ch) {
-  return ch === "#" || ch === "T" || ch === "≈";
-}
-
-function tryMove(dir) {
-  if (state.mode !== "game") return;
-
-  const p = state.player;
-  p.facing = dir;
-
-  const dx = dir === "left" ? -1 : dir === "right" ? 1 : 0;
-  const dy = dir === "up" ? -1 : dir === "down" ? 1 : 0;
-
-  const nx = p.x + dx;
-  const ny = p.y + dy;
-
-  if (!state.map) return;
-  if (nx < 0 || ny < 0 || nx >= state.map.width || ny >= state.map.height) return;
-
-  const ch = state.map.grid[ny][nx];
-  if (isBlocked(ch)) {
-    els.dialogue.textContent = "Bumped.";
-    renderOnce();
-    return;
-  }
-
-  p.x = nx;
-  p.y = ny;
-  els.dialogue.textContent = `Moved ${dir}`;
-  renderOnce();
-}
-
-function measureCharSize(preEl) {
-  const cs = getComputedStyle(preEl);
-
-  const probe = document.createElement("pre");
-  probe.style.visibility = "hidden";
-  probe.style.position = "absolute";
-  probe.style.left = "-9999px";
-  probe.style.top = "0";
-  probe.style.margin = "0";
-  probe.style.padding = "0";
-  probe.style.border = "0";
-  probe.style.whiteSpace = "pre";
-  probe.style.fontFamily = cs.fontFamily;
-  probe.style.fontSize = cs.fontSize;
-  probe.style.lineHeight = cs.lineHeight;
-  probe.style.letterSpacing = cs.letterSpacing;
-  probe.style.fontVariantLigatures = "none";
-
-  const n = 50;
-  const line = ".".repeat(n);
-  probe.textContent = line + "\n" + line;
-
-  document.body.appendChild(probe);
-  const rect = probe.getBoundingClientRect();
-  document.body.removeChild(probe);
-
-  return { cw: rect.width / n, ch: rect.height / 2 };
-}
-
-function computeViewport(preEl, desiredW, desiredH) {
-  const { cw, ch } = measureCharSize(preEl);
-
-  const fitW = Math.floor(preEl.clientWidth / cw);
-  const fitH = Math.floor(preEl.clientHeight / ch);
-
-  let vw = Math.max(9, fitW);
-  let vh = Math.max(9, fitH);
-
-  if (vw % 2 === 0) vw -= 1;
-  if (vh % 2 === 0) vh -= 1;
-
-  vw = Math.min(vw, desiredW);
-  vh = Math.min(vh, desiredH);
-
-  return { vw, vh };
-}
-
-function renderOnce() {
-  const { vw, vh } = computeViewport(els.map, CONFIG.viewWidth, CONFIG.viewHeight);
-
-  if (state.mode === "title") {
-    state.title.frame += 1;
-
-    if (!state.title.didInitX) {
-      // start fully off the right edge
-      const logoW = Math.max(...state.title.logoLines.map(l => l.length));
-      state.title.logoX = vw;
-      state.title.didInitX = true;
-      // if vw is tiny, still okay
-      if (logoW > vw) state.title.logoX = vw;
-    }
-
-    state.title.logoX += state.title.logoSpeed;
-
-    const logoW = Math.max(...state.title.logoLines.map(l => l.length));
-    if (state.title.logoX < -logoW) {
-      state.title.logoX = vw;
-    }
-
-    renderTitleToPre(els.map, state.title, vw, vh);
-    return;
-  }
-
-  if (state.mode !== "game") return;
-  if (!state.map) return;
-
-  renderMapToPre(els.map, state.map, state.player, vw, vh);
-}
-
-let rafId = null;
-function startTitleLoop() {
-  if (rafId != null) cancelAnimationFrame(rafId);
-
-  const tick = () => {
-    if (state.mode === "title") {
-      renderOnce();
-      rafId = requestAnimationFrame(tick);
-    }
-  };
-  rafId = requestAnimationFrame(tick);
-}
-
-function startTitle() {
-  state.mode = "title";
-  els.dialogue.textContent = "Title. Press Start.";
-  playTitleMusic();
-  startTitleLoop();
-}
-
-function startGame() {
-  state.mode = "game";
-  els.dialogue.textContent = "Loaded. Use D-pad.";
-
-  chip.play(SONGS.overworld);
-
-  renderOnce();
-}
-
-async function boot() {
-  els.portrait.textContent = "Portrait\n(later)";
-  els.inventory.textContent = "- Nothing";
-  els.dialogue.textContent = "Loading...";
-
-  const startMap = getStartMapName();
-  state.map = await loadMap(startMap);
-
-  // Bind inputs once
-  bindInput({
-    onMove: tryMove,
-    onA: () => { els.dialogue.textContent = "A pressed"; },
-    onB: () => { els.dialogue.textContent = "B pressed"; },
-    onStart: () => {
-      if (state.mode === "title") startGame();
-      else els.dialogue.textContent = "Start pressed";
-    },
-    onSelect: () => {
-      // optional: go back to title for testing
-      els.dialogue.textContent = "Select pressed";
-    },
-  });
-
-  window.addEventListener("resize", () => {
-    renderOnce();
-  });
-
-  // Show boot overlay and do not render anything until user clicks it
-  state.mode = "boot";
-  createBootOverlay(async () => {
-    await chip.init();
-    chip.play(SONGS.title);
-    startTitle();
-  });
-}
-
-boot().catch(err => {
-  els.dialogue.textContent = String(err);
-});
+import {parseMap,findRoute,validPosition,nearestWalkable,isWater,TILES} from './atlas.js';
+import {AtlasRenderer} from './render.js';
+import {SceneRenderer,drawIntro} from './scene.js';
+import {ChipPlayer} from './music.js';
+import {SONGS} from './songs.js';
+import {ITEMS,ENEMIES,DREAMS,TOWN_IDS,PORTRAITS,newGame,hydrate,maxHp,maxMp,attackPower,defensePower,xpNeeded,addItem,priceFor,buyItem,sellItem,equipItem,useItem,rest,startBattle,battleAction,randomEncounter,makeTown,makeDream,makeFinale,localWalkable,localRoute,advanceStalker,hideFromStalker} from './rpg.js';
+const $=id=>document.getElementById(id), KEY='feverwake-save-v2', reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const music=new ChipPlayer;let sound=false,world,meta,atlas,localRenderer,localMap,state,loaded=null,started=false,atlasView=false,route=[],routeTarget=null,lastStep=0,hold=null,holdStart=0,overlayType=null,previousFocus=null,installPrompt=null,lastFrame=0,saveError=false,offlineReady=false;
+const directions={up:[0,-1],right:[1,0],down:[0,1],left:[-1,0]},escapeHTML=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+try{const raw=JSON.parse(localStorage.getItem(KEY)||localStorage.getItem('unwaking-save-v2'));if(raw?.version===2)loaded=hydrate(raw);}catch{}
+$('continue').hidden=!loaded;$('begin').textContent=loaded?'New journey':'Begin';$('begin').disabled=true;$('continue').disabled=true;
+const introLines=['At first, it was only a bad dream.','Then the sleepers stopped waking.','Something is learning the shape of our world.'];
+function persist(){if(!state)return;try{localStorage.setItem(KEY,JSON.stringify(state));loaded=state;saveError=false;}catch{if(!saveError){saveError=true;state.message='Saving is unavailable in this browser. Export a backup from the menu.';}}}
+function say(text){state.message=text;$('message').textContent=text;}
+function place(id){return meta.places.find(p=>p.id===id);}
+function title(){return state.scene==='world'?(atlasView?'The Lantern Coast':nearPlace()?.name||regionName()):state.scene==='town'?place(state.town).name:state.scene==='dream'?DREAMS[state.dream].name:'The Waking Streets';}
+function regionName(){return state.player.x<118?(state.player.y<40?'The Pale Crown':'The Verdant Reach'):state.player.x<205?'The Sundered Kingdom':'The Amber Coast';}
+function nearPlace(){return meta.places.find(p=>Math.abs(p.x-state.player.x)+Math.abs(p.y-state.player.y)<=2);}
+function currentObject(){if(!localMap)return null;return [...localMap.objects].sort((a,b)=>distance(a,state.local)-distance(b,state.local)).find(o=>distance(o,state.local)<=1);}
+function distance(a,b){return Math.abs(a.x-b.x)+Math.abs(a.y-b.y);}
+function setLocal(){localMap=state.scene==='town'?makeTown(state.town):state.scene==='dream'?makeDream(state.dream):state.scene==='finale'?makeFinale():null;if(localMap&&!localWalkable(localMap,state.local.x,state.local.y))state.local={...localMap.spawn};}
+function setTrack(){if(!sound||!state)return;music.play(state.combat?SONGS.battle:state.scene==='dream'||state.scene==='finale'?SONGS.dream:state.scene==='town'?SONGS.town:state.player.y<40?SONGS.snow:state.player.x>210?SONGS.dunes:SONGS.coast);}
+function update(){if(!started)return;const h=state.hero;$('hp-text').textContent=h.hp+' / '+maxHp(state);$('hp-bar').style.width=Math.max(0,h.hp/maxHp(state)*100)+'%';$('mp-text').textContent=h.mp+' / '+maxMp(state);$('mp-bar').style.width=h.mp/maxMp(state)*100+'%';$('level').textContent=String(h.level).padStart(2,'0');$('gold').textContent=h.gold;$('chapter').textContent=state.stage==='breach'?'IV / DREAMS COME HOME':['I / THE SLEEPING SICKNESS','II / THE ENDLESS LESSON','III / SOMEONE AT THE TABLE','IV / THE WAKING WORLD'][state.cleared.length];$('realm').textContent=state.scene==='dream'?'INSIDE '+DREAMS[state.dream].dreamer.toUpperCase()+"'S DREAM":state.scene==='finale'?'YOU ARE AWAKE. KEEP MOVING.':'WAKING WORLD';$('location').textContent=title();$('message').textContent=state.message;$('atlas').textContent=atlasView?'Explore':'Atlas';$('zoom-controls').hidden=state.scene!=='world';$('dread').hidden=state.scene!=='dream'&&state.scene!=='finale';$('dread').textContent=state.scene==='finale'?'NO WEAPON WILL HELP':(state.hiddenSteps?'HIDDEN · ':state.stalker.chasing?'IT SEES YOU · ':'DREAD ')+state.dread+'%';$('map-caption').textContent=state.scene==='town'?'@ you · S shop · I inn · Q dreamer · > exit':state.scene==='dream'?'@ you · $ loot · h hide · B guardian · ! anchor':state.scene==='finale'?'@ you · & the visitor · > escape':'@ you · H harbor · o town · tap to travel';const o=currentObject();$('interact').firstChild.textContent=state.scene==='world'?(nearPlace()?'Visit ':'Look '):o?({shop:'Shop ',inn:'Rest ',clinic:'Dreamer ',npc:'Talk ',rumor:'Talk ',exit:'Leave ',hide:'Hide ',chest:'Open ',boss:'Face it ',anchor:'Remember ',ending:'Escape '}[o.type]||'Interact '):'Interact ';atlas.player=state.player;atlas.discovered=new Set(state.discovered);atlas.mode=atlasView?'atlas':'explore';atlas.selected=nearPlace()?.id||atlas.selected;atlas.route=state.scene==='world'?route:[];setTrack();}
+function resize(){if(atlas){atlas.resize();if(started&&state.scene!=='world')localRenderer.draw(localMap,state);}}
+function begin(resume){state=resume&&loaded?hydrate(loaded):newGame();state.player=nearestWalkable(world,state.player);setLocal();started=true;route=[];atlasView=false;$('intro').hidden=true;$('game').hidden=false;atlas.zoom=6;atlas.center(state.player);resize();update();persist();if(state.combat)showBattle();else if(state.cleared.length===3&&state.stage==='illness')beginFinale();else if(state.stage==='ended'&&state.scene==='finale')showEnding();else if(!resume)talk('The first sleeper','Mara, harbor keeper','mara','Theo has been asleep for six days. He keeps calling for a door that does not exist. Come find me in Brackenport. I think you can reach him.',[{label:'Enter the world',action:closeDialog}], 'PROLOGUE');}
+function closeDialog(){if(overlayType==='battle'&&state?.combat)return;const returnFocus=previousFocus;$('overlay').hidden=true;overlayType=null;hold=null;previousFocus=null;returnFocus?.focus?.({preventScroll:true});update();persist();}
+function forceClose(){overlayType=null;$('overlay').hidden=true;hold=null;}
+function dialog(name,tag,html,actions=[],type='normal',canClose=true){if($('overlay').hidden)previousFocus=document.activeElement;hold=null;overlayType=type;$('dialog-title').textContent=name;$('dialog-tag').textContent=tag;$('dialog-content').innerHTML=html;$('dialog-actions').replaceChildren();$('dialog-close').hidden=!canClose;for(const a of actions){const b=document.createElement('button');b.textContent=a.label;if(a.primary)b.className='primary';if(a.disabled)b.disabled=true;b.onclick=a.action;$('dialog-actions').append(b);}$('overlay').hidden=false;requestAnimationFrame(()=>($('dialog-actions').querySelector('button:not(:disabled)')||$('dialog-close')).focus({preventScroll:true}));update();persist();}
+function portrait(id){return '<pre class="portrait" aria-hidden="true">'+escapeHTML((PORTRAITS[id]||PORTRAITS.mara).join('\n'))+'</pre>';}
+function talk(name,speaker,id,text,actions=[{label:'Continue',action:closeDialog}],tag='CONVERSATION'){dialog(name,tag,'<div class="conversation">'+portrait(id)+'<div><p>'+escapeHTML(text)+'</p></div></div><div class="dialog-note">'+escapeHTML(speaker)+'</div>',actions);}
+function confirmNew(){dialog('Begin again?','NEW JOURNEY','<p class="quest">This replaces your current journey. Export a backup from the game menu if you want to keep it.</p>',[{label:'Keep this journey',action:closeDialog},{label:'Begin again',action:()=>{forceClose();begin(false);},primary:true}]);}
+function move(dx,dy,automatic=false){if(!started||overlayType||atlasView||(state.stage==='ended'&&state.scene==='finale'))return false;if(!automatic){route=[];routeTarget=null;}if(state.scene==='world'){const next={x:state.player.x+dx,y:state.player.y+dy};if(!validPosition(world,next)){say('The ridge is impassable. Find a pass or take the skiff around.');return false;}state.player=next;atlas.center(next);const p=nearPlace();if(p&&!state.discovered.includes(p.id)){state.discovered.push(p.id);say(p.name+' lies ahead. Visit to enter.');}const tile=world.grid[next.y][next.x];if(!isWater(tile)){const e=randomEncounter(state,tile);if(e){startBattle(state,e);route=[];showBattle();}}}else{const next={x:state.local.x+dx,y:state.local.y+dy};if(!localWalkable(localMap,next.x,next.y))return false;state.local=next;if(state.scene==='dream'||state.scene==='finale'){if(advanceStalker(state,localMap)){caught();return true;}const trap=state.dream+':trap:'+next.x+','+next.y;if(localMap.grid[next.y][next.x]==='%'&&!state.opened.includes(trap)){state.opened.push(trap);state.hero.hp=Math.max(1,state.hero.hp-4);say('A familiar voice calls from the wall. You lose 4 HP.');}if(state.scene==='dream'){const e=randomEncounter(state,localMap.grid[next.y][next.x]);if(e){startBattle(state,e);route=[];showBattle();}}}const o=localMap?.objects.find(o=>o.x===next.x&&o.y===next.y);if(o&&['exit','ending'].includes(o.type)&&!overlayType&&!automatic)interactObject(o);}
+ state.steps++;update();persist();return true;}
+function travel(p){forceClose();route=findRoute(world,state.player,p)||[];routeTarget={kind:'world',place:p};atlasView=false;atlas.zoom=6;atlas.center(state.player);say('Traveling to '+p.name+'. Encounters interrupt travel. Tap a direction to stop.');update();if(!route.length)visit(p);}
+function visit(p){route=[];routeTarget=null;if(!p){say('Roads are safer than the woods. Open the atlas to choose a town.');return;}if(TOWN_IDS.includes(p.id)){enterTown(p.id);return;}const reward='landmark:'+p.id;const found=!state.opened.includes(reward);if(found){state.opened.push(reward);state.hero.gold+=14;addItem(state,'salt');}talk(p.name,p.person||'A page in your journal','sleeper',p.lines.join(' ') + (found?' You find 14 coins and waking salts in a traveler’s cache.':''),[{label:'Continue exploring',action:closeDialog}],'PLACE DISCOVERED');}
+function enterTown(id){forceClose();state.scene='town';state.town=id;state.lastTown=id;if(!state.discovered.includes(id))state.discovered.push(id);state.player={x:place(id).x,y:place(id).y};state.hero.hp=Math.min(state.hero.hp,maxHp(state));setLocal();state.local={...localMap.spawn};state.combat=null;state.encounterClock=0;route=[];say('Welcome to '+place(id).name+'. Tap a person or doorway to approach.');update();persist();}
+function leaveTown(){forceClose();state.scene='world';state.player={x:place(state.town).x,y:place(state.town).y};localMap=null;atlasView=false;atlas.zoom=6;atlas.center(state.player);say('Back on the coast. Your folding skiff opens automatically on water.');update();persist();}
+function interact(){if(overlayType)return;if(state.scene==='world'){visit(nearPlace());return;}const o=currentObject();if(o)interactObject(o);else say(state.scene==='town'?'Approach a person, shop, inn, or dreamer. Tap them to walk there.':'Find the dream’s guardian, then recover its memory anchor.');}
+function interactObject(o){route=[];routeTarget=null;switch(o.type){case 'exit':if(state.scene==='town')leaveTown();else leaveDream();break;case 'shop':showShop();break;case 'inn':showInn();break;case 'npc':resident();break;case 'rumor':rumor();break;case 'clinic':clinic();break;case 'chest':openChest(o);break;case 'hide':hideFromStalker(state);say('You fold yourself into a forgotten memory. The footsteps pass.');break;case 'boss':if(state.defeated.includes(DREAMS[state.dream].id)){say('The guardian is gone. The memory anchor waits nearby.');break;}startBattle(state,DREAMS[state.dream].boss,true);showBattle();break;case 'anchor':recoverAnchor();break;case 'ending':state.stage='ended';showEnding();break;}update();persist();}
+const residents={bracken:['Mara, harbor keeper','Theo drew the same stranger in every picture. Then the ink began moving. I can lend you a tether: a memory of this shore. It will bring you back.'],hollow:['Old Fen','The sleepers all describe a tall visitor. Nobody remembers a face. I have stopped looking at my reflection after sunset.'],northgate:['Edda, school caretaker','Iven delivered letters here as a boy. Now he hears the school bell in his sleep. Every time it rings, another name disappears from the register.'],wayfarer:['Pip, innkeeper','Travelers used to tell different dreams. Now every table tells the same one. A hallway. A door. Someone on the other side.'],cedar:['Orren, boatwright','Sela built boats to bring people home. In her sleep, she keeps setting a place at the table for someone who drowned before she was born.'],oasis:['Toma, tea seller','The tea will keep you awake for a while. It will not keep the thing inside your dreams. I have seen its footprints in the sand.']};
+function resident(){const [name,text]=residents[state.town],id='resident:'+state.town;const done=state.choices.includes(id);talk(name,'Residents remember how you treat them.','mara',text,done?[{label:'Take care of yourself',action:closeDialog}]:[{label:'I’m listening. (+ empathy)',action:()=>{state.choices.push(id);state.hero.empathy++;say('Empathy grows. Traders offer better prices; inn rooms cost less.');closeDialog();}},{label:'I’ll face it. (+ courage)',action:()=>{state.choices.push(id);state.hero.courage++;say('Courage grows. Escaping ordinary battles becomes easier.');closeDialog();}}]);}
+function rumor(){const hints=['Dream levels only strengthen you inside dreams. Waking choices stay with you everywhere.','Roads are quiet. Wolves prefer the woods. Your skiff crosses open water without encounters.','The visitor cannot be killed. Break its line of sight, then hide at h.','Guarding recovers focus. A lucid spark can turn a battle.','A dream’s guardian protects its anchor. The visitor is something else entirely.','If you are out of coins, every inn has a free common room.'];talk('A traveler by the road','A little practical advice','innkeeper',hints[TOWN_IDS.indexOf(state.town)],[{label:'Thank you',action:closeDialog}]);}
+function clinic(){const index=DREAMS.findIndex(d=>d.town===state.town);if(index<0){talk('The quiet ward','A volunteer at the bedside','sleeper','No one here has fallen into the deep sleep yet. The known sleepers are Theo in Brackenport, Iven in Northgate, and Sela in Cedarhaven.');return;}const d=DREAMS[index];if(state.cleared.includes(d.id)){talk(d.dreamer+' is awake','The illness has loosened its grip.','mara','I remember your voice. And another set of footsteps, following you out. Please be careful.');return;}if(index>state.cleared.length){talk(d.dreamer+' is sleeping','The tether cannot reach this dream yet.','sleeper','This nightmare lies deeper. Recover the memory in '+DREAMS[state.cleared.length].name+' first. Each recovered memory strengthens the tether.');return;}talk(d.dreamer+' is sleeping',d.name,'sleeper',d.description+' Find the guardian, recover the memory anchor, and remember: the tall visitor cannot be fought.',[{label:'Not yet',action:closeDialog},{label:'Enter the dream',action:()=>enterDream(index),primary:true}],'THE SLEEPING SICKNESS');}
+function enterDream(index){forceClose();state.scene='dream';state.dream=index;state.dread=0;state.dreamTicks=0;state.hiddenSteps=0;state.encounterClock=0;state.combat=null;setLocal();state.local={...localMap.spawn};state.stalker={...localMap.stalker,active:false,chasing:false};state.hero.mp=maxMp(state);say('Find B, the guardian. Then reach !, the memory anchor. $ marks loot; h is a hiding place.');update();persist();}
+function leaveDream(){const town=DREAMS[state.dream].town;enterTown(town);say('You follow the tether home. Your dream progress is remembered.');}
+function openChest(o){const key=state.dream+':'+o.x+','+o.y;if(state.opened.includes(key)){say('The chest is empty.');return;}state.opened.push(key);state.hero.gold+=20+state.dream*10;addItem(state,'potion',2);addItem(state,'tonic');if(state.dream===1)addItem(state,'iron_blade');if(state.dream===2)addItem(state,'ward_coat');talk('Something worth remembering','Recovered from the nightmare','merchant',(20+state.dream*10)+' coins, two red cordials, and a lucidity tonic.'+(state.dream===1?' An iron saber rests beneath them.':state.dream===2?' A wardstitched coat is folded underneath.':''),[{label:'Take the loot',action:closeDialog}],'CHEST OPENED');if(sound)music.chime();}
+function recoverAnchor(){const d=DREAMS[state.dream];if(!state.defeated.includes(d.id)){say('The guardian still holds this memory. Find B first.');return;}if(state.cleared.includes(d.id)){say('This memory has already been returned.');return;}state.cleared.push(d.id);addItem(state,'memory');if(sound)music.chime();const memories=['A child on a sunny pier. His mother is calling him home. The extra doors dissolve. Theo takes his first waking breath.','An undelivered letter. A simple apology. The empty desks fill with morning light, and Iven finally hears the bell end.','A place at a table, set for grief. Sela remembers who is missing. The guest stands up. It has learned where the door is.'];talk('A memory returned',d.dreamer+' can wake now.','sleeper',memories[state.dream],[{label:state.cleared.length===3?'Follow the tether home':'Wake up',action:()=>state.cleared.length===3?beginFinale():leaveDream(),primary:true}],'DREAM '+state.cleared.length+' / 3');}
+function beginFinale(){forceClose();state.scene='finale';state.stage='breach';state.combat=null;state.dreamTicks=0;state.hiddenSteps=0;state.dread=0;setLocal();state.local={...localMap.spawn};state.stalker={...localMap.stalker,active:false,chasing:false};state.hero.hp=Math.min(40,state.hero.hp);talk('You are awake.','And the footsteps are still here.','pursuer','Your sword passes through it. Your dream powers are gone. The streets fold around you. Follow the open passage to >. Keep moving. You cannot fight this.',[{label:'Run',action:closeDialog,primary:true}],'THE WAKING WORLD');say('Follow the winding street to >. The visitor moves after every second step.');update();persist();}
+function caught(){route=[];if(state.scene==='finale'){talk('The street begins again','The last memory refuses to let go.','pursuer','You remember the route now. Keep ahead of it. Find the open passage and reach the waking door.',[{label:'Try the escape again',action:beginFinale,primary:true}],'CAUGHT');}else{state.hero.gold=Math.floor(state.hero.gold*.9);state.hero.hp=24;enterTown(DREAMS[state.dream].town);talk('The tether holds','You are back beside the sleeper.','mara','Something found you. You lost a few coins, but kept your memories and loot. Rest, prepare, and try another path.',[{label:'Catch your breath',action:closeDialog}],'PULLED AWAKE');}}
+function showEnding(){forceClose();state.stage='ended';route=[];talk('Morning, for now.','FEVERWAKE · THE FIRST CHAPTER','mara','The sleepers wake. Theo asks for breakfast. Iven opens his letters. Sela sets one fewer place. On the shore, one set of footprints keeps walking after its owner has stopped.',[{label:'Explore the coast',action:()=>{enterTown('bracken');state.stage='ended';say('Chapter complete. The coast is yours to explore.');persist();}},{label:'View your journal',action:showJournal}],'CHAPTER COMPLETE');}
+function showBattle(){const b=state.combat;if(!b)return;const e=ENEMIES[b.id];const html='<div class="battle-portrait">'+portrait(e.portrait)+'<div class="enemy-hp">'+(b.phase==='ongoing'?'ENEMY HP '+b.hp+' / '+b.maxHp:b.phase.toUpperCase())+'<div class="meter"><i style="width:'+b.hp/b.maxHp*100+'%;background:var(--red)"></i></div><div class="dialog-note">YOU '+state.hero.hp+'/'+maxHp(state)+' HP<br>FOCUS '+state.hero.mp+'/'+maxMp(state)+(state.scene==='dream'?'<br>DREAM LEVEL '+state.hero.level:'<br>WAKING WORLD')+'</div></div></div><div class="battle-log" aria-live="polite">'+b.log.slice(-3).map(l=>'<p>'+escapeHTML(l)+'</p>').join('')+'</div>';
+ const act=a=>()=>{battleAction(state,a);showBattle();};const actions=b.phase==='ongoing'?[{label:'Attack',action:act('attack'),primary:true},{label:'Guard · +2 focus',action:act('guard')},...(state.scene==='dream'?[{label:'Lucid spark · 3 focus',action:act('spark'),disabled:state.hero.mp<3},...(state.hero.level>=3?[{label:'Sever · 5 focus',action:act('sever'),disabled:state.hero.mp<5}]:[])]:[]),{label:'Cordial ×'+(state.bag.potion||0),action:act('potion'),disabled:!state.bag.potion||state.hero.hp===maxHp(state)},{label:'Tonic ×'+(state.bag.tonic||0),action:act('tonic'),disabled:!state.bag.tonic||state.hero.mp===maxMp(state)},{label:'Flee',action:act('flee')}]:[{label:b.phase==='lost'?'Wake at the inn':'Continue',action:()=>{const lost=b.phase==='lost';state.combat=null;forceClose();if(lost){state.hero.gold=Math.floor(state.hero.gold*.8);enterTown(state.lastTown);rest(state,false);say('You recover at the inn, with some coins lost. Your equipment and memories are safe.');}else say(b.boss&&b.phase==='won'?'The guardian is gone. Find the memory anchor marked !.':'The road is clear. Your spoils are in the inventory.');update();persist();},primary:true}];dialog(e.name,b.boss?'DREAM GUARDIAN':'ENCOUNTER',html,actions,'battle',false);}
+function paginate(items,page,row){const pages=Math.max(1,Math.ceil(items.length/4)),p=Math.min(page,pages-1);return{html:'<div class="rows">'+items.slice(p*4,p*4+4).map(row).join('')+'</div>',page:p,pages};}
+function addPager(page,pages,render){if(pages<2)return;const div=document.createElement('div');div.className='pagination';const prev=document.createElement('button');prev.textContent='← Previous';prev.disabled=page===0;prev.onclick=()=>render(page-1);const label=document.createElement('span');label.textContent=(page+1)+' / '+pages;const next=document.createElement('button');next.textContent='Next →';next.disabled=page===pages-1;next.onclick=()=>render(page+1);div.append(prev,label,next);$('dialog-content').append(div);}
+function showBag(page=0,note=''){if(state.combat)return;const ids=Object.keys(state.bag).filter(id=>state.bag[id]>0),p=paginate(ids,page,id=>{const it=ITEMS[id],equipped=state.hero.weapon===id||state.hero.armor===id;return '<div class="item-row"><div><strong>'+escapeHTML(it.name)+' ×'+state.bag[id]+(equipped?' · equipped':'')+'</strong><small>'+escapeHTML(it.description)+'</small></div>'+(['use','weapon','armor'].includes(it.kind)?'<button data-item="'+id+'">'+(it.kind==='use'?'Use':equipped?'Equipped':'Equip')+'</button>':'')+'</div>';});dialog('Your belongings','INVENTORY · '+state.hero.gold+' COINS',p.html+'<p class="dialog-note">'+escapeHTML(note||'Attack '+attackPower(state)+' · Defense '+defensePower(state)+' · Empathy '+state.hero.empathy+' · Courage '+state.hero.courage)+'</p>',[{label:'Return to the world',action:closeDialog}]);addPager(p.page,p.pages,n=>showBag(n));$('dialog-content').querySelectorAll('[data-item]').forEach(b=>b.onclick=()=>{const id=b.dataset.item;showBag(p.page,ITEMS[id].kind==='use'?useItem(state,id).message:equipItem(state,id));});}
+function showShop(page=0,selling=false,note=''){const ids=selling?Object.keys(state.bag).filter(id=>state.bag[id]>0&&ITEMS[id].kind!=='key'):['potion','tonic','salt','iron_blade','quilted_coat','silver_blade','ward_coat'];const p=paginate(ids,page,id=>'<div class="item-row"><div><strong>'+ITEMS[id].name+(selling?' ×'+state.bag[id]:'')+'</strong><small>'+ITEMS[id].description+'</small></div><button data-trade="'+id+'">'+(selling?'Sell '+Math.max(1,Math.floor(ITEMS[id].price/2)):'Buy '+priceFor(state,id))+' c</button></div>');dialog(selling?'Sell your finds':'The traveler’s counter','SHOP · '+state.hero.gold+' COINS',p.html+'<p class="dialog-note">'+escapeHTML(note||(state.hero.empathy?'Your empathy earns a warmer price.':'Provisions for the road. Equipment works in both worlds.'))+'</p>',[{label:selling?'Buy supplies':'Sell items',action:()=>showShop(0,!selling)},{label:'Leave shop',action:closeDialog}]);addPager(p.page,p.pages,n=>showShop(n,selling));$('dialog-content').querySelectorAll('[data-trade]').forEach(b=>b.onclick=()=>showShop(p.page,selling,selling?sellItem(state,b.dataset.trade):buyItem(state,b.dataset.trade)));}
+function showInn(note=''){talk('A room with a morning','Innkeeper · '+state.hero.gold+' coins','innkeeper',note||'A warm meal. A lock on the door. A bed you can trust, for now. If your purse is empty, there is always room by the fire.',[{label:'Room · '+Math.max(4,10-state.hero.empathy)+' coins',action:()=>showInn(rest(state,true)),primary:true},{label:'Common room · free',action:()=>showInn(rest(state,false))},{label:'Leave the inn',action:closeDialog}],'INN');}
+function showAtlas(page=0){if(state.combat)return;if(state.scene!=='world'){dialog('The way back','ATLAS','<p class="quest">The atlas charts the waking coast. Leave town or follow your tether out of the dream to travel between regions.</p>',[{label:'Back',action:closeDialog}]);return;}if(!atlasView){forceClose();atlasView=true;route=[];atlas.fit();say('Tap a marked place to choose a destination. Atlas again returns to exploration.');update();}else{atlasView=false;atlas.zoom=6;atlas.center(state.player);update();}}
+function destination(p){dialog(p.name,p.region,'<p class="quest">'+escapeHTML(p.description)+'</p><p class="dialog-note">'+(TOWN_IDS.includes(p.id)?'Town · NPCs · shop · inn'+(DREAMS.some(d=>d.town===p.id)?' · infected dream':''):'A landmark with a story and a traveler’s cache.')+'</p>',[{label:'Back to map',action:closeDialog},{label:nearPlace()?.id===p.id?'Visit':'Travel here',action:()=>nearPlace()?.id===p.id?(forceClose(),visit(p)):travel(p),primary:true}]);}
+function townList(page=0){const p=paginate(TOWN_IDS,page,id=>'<div class="item-row"><div><strong>'+escapeHTML(place(id).name)+'</strong><small>'+escapeHTML(place(id).region)+'</small></div><button data-town="'+id+'">Travel</button></div>');dialog('Choose a destination','THE LANTERN COAST',p.html,[{label:'Back',action:showMenu}]);addPager(p.page,p.pages,townList);$('dialog-content').querySelectorAll('[data-town]').forEach(b=>b.onclick=()=>destination(place(b.dataset.town)));}
+function showJournal(){if(state.combat)return;dialog('The sleeping sickness','JOURNAL',DREAMS.map((d,i)=>'<p class="quest"><strong>'+(state.cleared.includes(d.id)?'[+] ':i===state.cleared.length?'[>] ':'[ ] ')+d.dreamer+' · '+place(d.town).name+'</strong><br>'+d.name+(state.cleared.includes(d.id)?' · restored':'')+'</p>').join('')+'<p class="dialog-note">Dream level '+state.hero.level+' · '+state.hero.xp+'/'+xpNeeded(state.hero.level)+' XP<br>Empathy '+state.hero.empathy+' · Courage '+state.hero.courage+'<br>'+state.discovered.length+' / '+meta.places.length+' places discovered</p>',[{label:'How to play',action:()=>showHelp(0)},{label:'Return',action:closeDialog}]);}
+function showHelp(page=0){const pages=[['Two worlds','Walk with the arrows or WASD. On a phone, hold the direction buttons. Tap a map tile to walk there. Approach a person or doorway and use Interact. Tap a place on the atlas to travel.','Towns have shops, inns, conversations, and sleepers. The first infected dream belongs to Theo in Brackenport.'],['Inside a dream','Defeat B, the guardian, then recover !, the memory anchor. $ is a chest. > follows your tether home. Guard in battle to regain focus. Dream XP unlocks stronger powers.','The tall visitor (&) cannot be killed. It moves when you move. Break its line of sight and use h to hide. Waking salts reduce dread.'],['Carry it with you','Your journey saves automatically on this device. Export a backup from Menu to move it between browsers or keep it safe. Loading an exported save replaces the current journey.','On iPhone, open the GitHub Pages link in Safari, then Share > Add to Home Screen. Keep Open as Web App enabled if it appears. On Android, use your browser’s Install app option. After the first online load, the game can run offline.']];const [name,a,b]=pages[page];dialog(name,'HOW TO PLAY · '+(page+1)+' / 3','<p class="quest">'+escapeHTML(a)+'</p><p class="quest">'+escapeHTML(b)+'</p>',[{label:page===0?'Back':'Previous',action:()=>page===0?showMenu():showHelp(page-1)},{label:page===2?'Return to game':'Next',action:()=>page===2?closeDialog():showHelp(page+1)}]);}
+function showMenu(){if(state.combat)return;dialog('A moment of quiet','FEVERWAKE','<div class="menu-grid"><button id="menu-journal">Journal</button><button id="menu-help">How to play</button><button id="menu-export">Export save</button><button id="menu-import">Import save</button><button id="menu-travel">Travel to town</button><button id="menu-install">'+(installPrompt?'Install game':'Save to phone')+'</button><button id="menu-title">Replay intro</button><button id="menu-new">New journey</button></div><p class="dialog-note">'+(saveError?'Automatic save unavailable. Export a backup.':'Journey saved on this device.'+(offlineReady?' · Offline ready.':''))+'</p>',[{label:'Return to game',action:closeDialog}]);$('menu-journal').onclick=showJournal;$('menu-help').onclick=()=>showHelp(0);$('menu-export').onclick=exportSave;$('menu-import').onclick=importSave;$('menu-travel').disabled=state.scene!=='world';$('menu-travel').onclick=()=>townList();$('menu-install').onclick=async()=>{if(installPrompt){await installPrompt.prompt();installPrompt=null;}else showHelp(2);};$('menu-title').onclick=()=>{closeDialog();persist();started=false;$('game').hidden=true;$('intro').hidden=false;$('continue').hidden=false;$('begin').textContent='New journey';music.stop();};$('menu-new').onclick=confirmNew;}
+function exportSave(){persist();const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='feverwake-save.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+function importSave(){const input=document.createElement('input');input.type='file';input.accept='.json,application/json';input.onchange=async()=>{try{const file=input.files[0];if(!file)return;if(file.size>1000000)throw new Error('Save file is too large.');const raw=JSON.parse(await file.text());if(raw?.version!==2)throw new Error('Choose an Feverwake save file.');loaded=hydrate(raw);forceClose();begin(true);say('Your saved journey is restored.');}catch(e){dialog('Could not load that save','IMPORT','<p class="quest">'+escapeHTML(e.message)+'</p>',[{label:'Back',action:showMenu}]);}};input.click();}
+$('dialog-close').onclick=closeDialog;$('begin').onclick=()=>loaded?confirmNew():begin(false);$('continue').onclick=()=>begin(true);$('interact').onclick=interact;$('bag').onclick=()=>showBag();$('journal').onclick=showJournal;$('menu').onclick=showMenu;$('title-button').onclick=showMenu;$('atlas').onclick=showAtlas;$('zoom-in').onclick=()=>atlas.zoomBy(1.3);$('zoom-out').onclick=()=>atlas.zoomBy(1/1.3);
+$('sound').onclick=async()=>{sound=!sound;try{if(sound){await music.init();setTrack();}else music.stop();$('sound').textContent=sound?'Sound on':'Sound off';$('sound').setAttribute('aria-pressed',String(sound));}catch{sound=false;say('Sound is unavailable in this browser.');}};
+for(const b of document.querySelectorAll('[data-dir]')){b.onpointerdown=e=>{e.preventDefault();b.setPointerCapture(e.pointerId);hold=b.dataset.dir;holdStart=performance.now();move(...directions[hold]);lastStep=performance.now();};b.onpointerup=b.onpointercancel=b.onlostpointercapture=()=>hold=null;}
+let pointer=null;
+$('map').addEventListener('pointerdown',e=>{const r=$('map').getBoundingClientRect();pointer={x:e.clientX-r.left,y:e.clientY-r.top,lastX:e.clientX,lastY:e.clientY,dragged:false};$('map').setPointerCapture(e.pointerId);});
+$('map').addEventListener('pointermove',e=>{if(!pointer||!atlasView)return;const dx=e.clientX-pointer.lastX,dy=e.clientY-pointer.lastY;if(Math.abs(dx)+Math.abs(dy)>2)pointer.dragged=true;if(pointer.dragged)atlas.pan(dx,dy);pointer.lastX=e.clientX;pointer.lastY=e.clientY;});
+$('map').addEventListener('pointerup',e=>{if(!pointer)return;const p=pointer;pointer=null;if(p.dragged||overlayType)return;if(state.scene==='world'){const landmark=atlas.landmarkAt(p.x,p.y);if(landmark){destination(landmark);return;}if(atlasView)return;const target=atlas.tile(p.x,p.y);if(validPosition(world,target)){route=findRoute(world,state.player,target)||[];routeTarget=null;}}else{const target=localRenderer.objectAt(localMap,p.x,p.y)||localRenderer.tile(p.x,p.y);if(target&&localWalkable(localMap,target.x,target.y)){route=localRoute(localMap,state.local,target)||[];routeTarget=localMap.objects.find(o=>o.x===target.x&&o.y===target.y)||null;if(!route.length&&routeTarget)interactObject(routeTarget);}}update();});
+$('map').addEventListener('pointercancel',()=>pointer=null);
+$('map').addEventListener('wheel',e=>{if(state?.scene!=='world')return;e.preventDefault();const r=$('map').getBoundingClientRect();atlas.zoomBy(e.deltaY>0?.87:1.15,e.clientX-r.left,e.clientY-r.top);},{passive:false});
+document.addEventListener('keydown',e=>{if(!$('intro').hidden){if(e.key==='Enter'&&!$('begin').disabled){e.preventDefault();begin(!!loaded);}return;}if(overlayType){if(e.key==='Escape'&&overlayType!=='battle'){e.preventDefault();closeDialog();}if(e.key==='Tab'){const list=[...$('dialog').querySelectorAll('button:not([disabled])')].filter(b=>!b.hidden);if(e.shiftKey&&document.activeElement===list[0]){e.preventDefault();list.at(-1)?.focus();}else if(!e.shiftKey&&document.activeElement===list.at(-1)){e.preventDefault();list[0]?.focus();}}return;}const key=e.key.toLowerCase(),dir={arrowup:'up',w:'up',arrowdown:'down',s:'down',arrowleft:'left',a:'left',arrowright:'right',d:'right'}[key];if(dir){e.preventDefault();if(!e.repeat){hold=dir;holdStart=performance.now();move(...directions[dir]);lastStep=performance.now();}}else if(['e',' ','enter'].includes(key)){e.preventDefault();interact();}else if(key==='i')showBag();else if(key==='m')showAtlas();else if(key==='j')showJournal();else if(key==='escape')showMenu();});
+document.addEventListener('keyup',e=>{if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','w','a','s','d','W','A','S','D'].includes(e.key))hold=null;});
+window.addEventListener('blur',()=>{hold=null;persist();});document.addEventListener('visibilitychange',()=>{hold=null;if(document.hidden){persist();music.suspend();}else if(sound)music.resume();});window.addEventListener('pagehide',persist);window.addEventListener('resize',resize);window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;});
+function frame(time){requestAnimationFrame(frame);if(document.hidden||time-lastFrame<(reduced?100:33))return;lastFrame=time;if(!started){drawIntro($('intro-art'),time,reduced);$('intro-line').textContent=introLines[Math.floor(time/5200)%introLines.length];return;}if(hold&&!overlayType&&time-holdStart>220&&time-lastStep>125){move(...directions[hold]);lastStep=time;}if(route.length&&!overlayType&&time-lastStep>95&&!atlasView){const next=route.shift(),p=state.scene==='world'?state.player:state.local;const target=routeTarget;if(!move(next.x-p.x,next.y-p.y,true))route=[];lastStep=time;if(!route.length&&!overlayType&&target){routeTarget=null;if(target.kind==='world')visit(target.place);else interactObject(target);}}if(state.scene==='world')atlas.draw(time);else localRenderer.draw(localMap,state,reduced?0:time);}
+requestAnimationFrame(frame);
+try{const [mapResponse,metaResponse]=await Promise.all([fetch('./data/maps/lantern_coast.txt'),fetch('./data/maps/lantern_coast.json')]);if(!mapResponse.ok||!metaResponse.ok)throw new Error('The coast could not be loaded.');world=parseMap(await mapResponse.text());meta=await metaResponse.json();atlas=new AtlasRenderer($('map'),world,meta);localRenderer=new SceneRenderer($('map'));$('begin').disabled=false;$('continue').disabled=false;$('loading').textContent='A journey that remembers where you left it';if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').then(()=>navigator.serviceWorker.ready).then(()=>{offlineReady=true;$('loading').textContent='Ready offline · Your journey saves automatically';}).catch(()=>{});}catch(e){$('loading').textContent='Could not load the world. Reconnect and reload.';console.error(e);}
