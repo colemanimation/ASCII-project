@@ -27,7 +27,7 @@ export class AtlasRenderer{
   paint(this.cache,1);this.overview=this.overview||document.createElement('canvas');paint(this.overview,2);this.smallOverview=this.smallOverview||document.createElement('canvas');paint(this.smallOverview,4);
  }
  resize(){
-  const r=this.canvas.getBoundingClientRect();this.width=r.width;this.height=r.height;const d=Math.min(devicePixelRatio||1,2);this.canvas.width=Math.round(r.width*d);this.canvas.height=Math.round(r.height*d);this.ctx.setTransform(d,0,0,d,0,0);this.fitScale=Math.min((this.width-34)/(this.world.width*10),(this.height-125)/(this.world.height*16));this.fitScale=Math.max(.08,this.fitScale);this.draw();
+  const r=this.canvas.getBoundingClientRect();this.width=r.width;this.height=r.height;const d=Math.min(devicePixelRatio||1,2);this.canvas.width=Math.round(r.width*d);this.canvas.height=Math.round(r.height*d);this.ctx.setTransform(d,0,0,d,0,0);this.fitScale=Math.min((this.width-34)/(this.world.width*10),(this.height-65)/(this.world.height*16));this.fitScale=Math.max(.025,this.fitScale);this.draw();
  }
  fit(){this.zoom=1;this.cx=this.world.width/2;this.cy=this.world.height/2;this.draw();}
  center(player){this.cx=player.x;this.cy=player.y;this.draw();}

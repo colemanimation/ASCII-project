@@ -18,9 +18,8 @@
       "description": "Tarred rope, wet cobblestones, and bread cooling on a windowsill. Every expedition begins at the harbor.",
       "person": "Mara, the harbor keeper",
       "lines": [
-        "The old lights have gone quiet. Three beacons, three shores. We used to navigate by their song.",
-        "Take my folding skiff. It opens itself when your boots meet the water. The roads will carry you inland.",
-        "Wake the lights at Mosswatch, Frostspire, and the Sunken Bell. Then climb to the observatory."
+        "Theo has been asleep for six days. We hear someone walking inside his room, even when it is empty.",
+        "Find Mara in the square. She knows how to tie a memory to a dream."
       ],
       "glyph": "H"
     },
@@ -35,8 +34,8 @@
       "description": "Roots hold this watchtower together. Somewhere inside, a little green flame is still waiting.",
       "person": "The keeper of roots",
       "lines": [
-        "A lantern is only a promise someone has kept.",
-        "The western light answers. Across the trees, windows begin to glow."
+        "The watchman left a note: I thought I was guarding the coast. Now I think I was guarding a door.",
+        "There are footprints on both sides of the wall."
       ],
       "glyph": "!"
     },
@@ -83,8 +82,8 @@
       "description": "A narrow pass opens onto a cluster of steep roofs. Smoke hangs low against the snow.",
       "person": "Iven, a passing courier",
       "lines": [
-        "The high peaks are impassable. Follow the pale road through the pass.",
-        "Frostspire is across the eastern strait. Best sail before the fog rolls in."
+        "The school bell rings each night. The school has been empty for twenty years.",
+        "Iven is sleeping in the ward. His dreams remember every name on the register."
       ],
       "glyph": "o"
     },
@@ -99,8 +98,8 @@
       "description": "A tower of black stone rises from a white ridge. Snow falls upward around its crown.",
       "person": "The keeper of snow",
       "lines": [
-        "I kept a place for you by the fire. I knew you would arrive.",
-        "The northern light answers. For a moment, every snowflake is a tiny star."
+        "Snow drifts upward around the tower. Someone has scratched an eye into every window.",
+        "The highest room contains a bed that has never been slept in. It is still warm."
       ],
       "glyph": "!"
     },
@@ -115,8 +114,8 @@
       "description": "A crooked inn leans into the sea wind. Travelers have scratched a hundred maps into its tables.",
       "person": "Pip, the innkeeper",
       "lines": [
-        "Our beds are dry, our soup is hot, and our directions are mostly correct.",
-        "Three old lights. One observatory. That is a story with an ending, if you keep walking."
+        "Our beds are dry and our soup is hot. We have started taking turns watching the sleepers.",
+        "Some guests leave before dawn. Their reflections stay a little longer."
       ],
       "glyph": "H"
     },
@@ -144,11 +143,11 @@
       "y": 55,
       "region": "The Sundered Kingdom",
       "tag": "The place the stars remember",
-      "description": "A brass telescope points at a dark patch of sky. Its three empty lenses are shaped like lantern flames.",
+      "description": "A brass telescope points at an empty sky. Inside, the cartographer is mapping rooms that exist only in dreams.",
       "person": "The star cartographer",
       "lines": [
-        "When the three beacons burn, the old sky will find its way home.",
-        "You do not need to conquer a world to leave it brighter."
+        "The cartographer has stopped charting stars. Every night, the sleepers draw another room on his map.",
+        "He shows you the newest page. You recognize the room you are standing in."
       ],
       "glyph": "@"
     },
@@ -163,8 +162,8 @@
       "description": "Tall cedars shelter a little harbor. Paper lanterns carry the names of ships that never came home.",
       "person": "Sela, a boatwright",
       "lines": [
-        "The desert begins where the river forgets its name. Follow it south.",
-        "If you hear a bell beneath the dunes, you are getting close."
+        "Sela used to build boats. Now she sleeps beside a window facing the sea.",
+        "She keeps asking us to set a place for the drowned guest."
       ],
       "glyph": "H"
     },
@@ -179,8 +178,8 @@
       "description": "Only the belfry remains above the sand. A cool wind rises from its buried doorway.",
       "person": "The keeper of sand",
       "lines": [
-        "We buried the city. We could not bury its song.",
-        "The eastern light answers. Somewhere beneath your feet, a bell rings once."
+        "The bell rings beneath the sand. It sounds like someone calling your name from another room.",
+        "You do not answer."
       ],
       "glyph": "!"
     },
@@ -211,8 +210,8 @@
       "description": "Seven stones lean toward the sea. At low tide, the water between them begins to hum.",
       "person": "A line in your field journal",
       "lines": [
-        "You stay for a while. There is no particular reason to leave.",
-        "One of the stones is warm to the touch."
+        "The stones hum a lullaby that nobody remembers learning.",
+        "For a moment, you hear someone humming a breath behind you."
       ],
       "glyph": "&"
     },
@@ -227,8 +226,8 @@
       "description": "A shipwreck rests on the island like a beached cathedral. Flowers grow from the captain's desk.",
       "person": "A water-stained logbook",
       "lines": [
-        "DAY 114. The charts end here.",
-        "DAY 115. We have decided to continue."
+        "DAY 114. We found an island that was not on the chart.",
+        "DAY 115. Everyone dreamed of the same house. DAY 116. The house is on the shore now."
       ],
       "glyph": "%"
     }

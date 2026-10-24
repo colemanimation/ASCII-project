@@ -1,36 +1,44 @@
-# DUSKWATCH · The Lantern Atlas
+# Feverwake
 
-An explorable ASCII world for Coleman's ASCII project. The Lantern Coast is a 280 × 116 plain-text map with fourteen authored landmarks, mountain passes, rivers, roads, forests, snowfields, dunes, and islands.
+A single-screen ASCII RPG about a world whose dreams are becoming infected.
 
-## Play
+**Play:** https://colemanimation.github.io/ASCII-project/
 
-Serve the repository over HTTP, then open `index.html`. It uses native browser modules and has no build step or external runtime dependencies. For example, run `python -m http.server 8000` in the GitHub checkout and open `http://localhost:8000`.
+The Lantern Coast is the waking world: a 280 × 116 ASCII atlas with 14 landmarks, roads, mountain passes, harbors, and a folding skiff. The dungeons are inside the dreams of people who cannot wake up.
 
-- **Atlas:** drag to pan; wheel, pinch, or use the buttons to zoom. Select a landmark on the map or use “Find a place.”
-- **Explore:** WASD, arrow keys, or held direction buttons move the traveler. Click a destination or chart a course to travel automatically. The folding skiff makes water traversable. Peaks require a pass.
-- **Interact:** E, Enter, or the Interact button opens a nearby landmark's dialogue. Dialogue pauses movement. Escape closes it or stops travel.
-- **The Long Way Home:** light Mosswatch, Frostspire, and the Sunken Bell, then visit the Observatory. Completing it leaves the world open for further exploration.
-- **Workshop:** paint terrain, undo/redo, import, and export plain-text maps. Hold Space while dragging to pan; on touch use two fingers. Maps retain the 280 × 116 expedition grid and protected landmark coordinates. The standalone editor at `MV/map_viewer.html` accepts other map sizes.
-- **Audio:** optional original chiptune loops change with region. Music starts only after pressing Sound, uses one audio context, and pauses when the page is hidden.
+## The playable chapter
 
-Progress and edited terrain are stored in the current browser's local storage. Export a text map for a portable copy. “Restore map” resets terrain after confirmation and keeps expedition progress.
+- Six towns with NPC conversations and ASCII portraits, provision shops, equipment, selling, and inns.
+- Wilderness encounters and turn-based combat: attack, guard, use items, escape, and unlock dream powers.
+- Three infected dreams: The Endless Nursery, The School After Midnight, and The House Beneath the Tide. Each has a guardian, chests, hazards, hiding places, and a memory to recover.
+- Dream experience grants levels and abilities. Waking choices build empathy or courage, changing prices and escape odds.
+- A roaming visitor follows you through nightmares. It cannot be killed. The final sequence brings it into the waking world, where you must escape without fighting.
+- Animated ASCII intro, original chiptunes, automatic local saves, import/export backups, and an installable offline app.
 
-## Source layout
+This is a compact first chapter, with three dreams and a short ending. Town layouts share a common structure. The world remains explorable after the chapter ends.
 
-- `data/maps/lantern_coast.txt`: editable ASCII terrain, one character per tile.
-- `data/maps/lantern_coast.json`: landmarks, dialogue, spawn, labels, and world dimensions.
-- `js/atlas.js`: pure map parsing, pathfinding, and save validation.
-- `js/render.js`: cached character rendering, overview detail levels, labels, and camera.
-- `js/main.js`: exploration, dialogue, quest, persistence, input, and workshop.
-- `js/music.js` and `js/songs.js`: audio scheduler and original compositions.
-- `scripts/build-world.py`: reproducible, art-directed terrain generator. Running it overwrites the generated text and metadata files.
-- `Test06.html`: original standalone prototype, retained.
-- `MV/`: original standalone map editor, with default atlas loading, fit, and stylesheet repairs.
+## Controls
 
-The Sites checkout stores the web root under `dist/`; the GitHub checkout keeps the web root at the repository root. The generator and tests support both layouts.
+Arrow keys / WASD move. E / Enter interacts. I opens inventory, M the atlas, J the journal, and Esc the menu. On a phone, hold the directional buttons or tap a destination. Tap a named landmark on the atlas to travel there. Ordinary encounters interrupt travel. Town roads are safe; the skiff crosses open water without encounters.
 
-## Validation
+Inside towns: `S` shop, `I` inn, `Q` sleeper, `M` / `N` people, `>` exit. Inside dreams: `$` chest, `B` guardian, `!` memory anchor, `h` hiding place, `>` wake. The visitor is `&`. It advances when you move, leaving time to think.
 
-Run `npm test` (Node.js, no dependency installation required). Six tests verify ASCII export round-tripping, map dimensions, route continuity and collision, reachability of all fourteen landmarks, the complete beacon route, malformed map rejection, and saved-state validation.
+## Save to a phone
 
-Browser QA covered the complete three-beacon quest and ending, save/reload, atlas selection and zoom, painting, undo/redo, exporting the edited text, re-importing it, map restore, optional audio activation, and held movement in a 390-pixel iframe. The phone layout was checked in Chromium; physical iOS Safari and real multitouch gestures were not exercised.
+Open the GitHub Pages link in Safari and choose **Share → Add to Home Screen**, or use **Install app** in a supporting Android browser. The installed game uses a single screen with no page scrolling. After one successful online load, the service worker caches the whole game for offline play.
+
+Saves stay in the current browser or installed app. Browser storage can be cleared by the device; use **Menu → Export save** for a portable backup. Export/import also moves progress between Safari and an installed app if they use separate storage. The previous atlas prototype's beacon progress does not carry into this RPG.
+
+## Development
+
+No production dependencies or build step. Serve this directory over HTTP and open `index.html`. Run `npm test` with a current Node.js release. When checked out through Sites, static files live in `dist/`; tests and the world generator support both layouts.
+
+- `js/rpg.js`: pure combat, economy, save validation, local maps, and pursuer rules.
+- `js/main.js`: scenes, dialogue, input, UI, progression, and persistence.
+- `js/render.js`: cached multi-resolution overworld renderer.
+- `js/scene.js`: town/dungeon renderer and animated intro.
+- `js/atlas.js`: map parsing, collision, and A* routing.
+- `scripts/build-world.py`: deterministic atlas generator, including current lore.
+- `manifest.webmanifest`, `sw.js`, `icons/`: home-screen and offline support. Increment the service-worker cache version when shipping asset changes.
+
+The original `Test06.html`, early maps, and standalone map editor remain in the repository for reference. This game uses the new `feverwake-save-v2` save slot.

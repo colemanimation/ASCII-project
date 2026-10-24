@@ -1,85 +1,22 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#090b0c">
-<meta name="description" content="An explorable ASCII world. Sail the Lantern Coast, wake its three beacons, and draw a world of your own.">
-<title>DUSKWATCH · The Lantern Atlas</title>
-<link rel="icon" href="icon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="style.css">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0a1013"><meta name="description" content="Feverwake. A single-screen ASCII RPG about a world whose dreams are becoming infected.">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Feverwake">
+<link rel="manifest" href="./manifest.webmanifest"><link rel="icon" href="./icons/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+<link rel="stylesheet" href="./style.css"><title>Feverwake · An ASCII dream RPG</title>
 </head>
 <body>
-<div id="app">
-<header class="masthead">
- <a class="brand" href="./" aria-label="DuskWatch home"><span class="brand-mark" aria-hidden="true">✧</span><span><strong>DUSKWATCH</strong><small>THE LANTERN ATLAS</small></span></a>
- <div class="edition">A WORLD WRITTEN IN CHARACTERS<span>FIELD EDITION / 001</span></div>
- <button id="sound" class="quiet" aria-pressed="false" title="Toggle chiptune music">♪ <span>Sound off</span></button>
-</header>
-<main>
- <section class="atlas-shell" aria-label="World atlas">
-  <div class="atlas-top">
-   <div class="tabs" role="group" aria-label="View mode">
-    <button data-mode="atlas" class="active" aria-pressed="true">01 <span>Atlas</span></button>
-    <button data-mode="explore" aria-pressed="false">02 <span>Explore</span></button>
-    <button data-mode="workshop" aria-pressed="false">03 <span>Workshop</span></button>
-   </div>
-   <span class="live-label"><i></i> <span id="mode-status">THE KNOWN WORLD</span></span>
-  </div>
-  <div id="map-stage">
-   <canvas id="map" tabindex="0" aria-label="Interactive ASCII map. Drag to pan, pinch or scroll to zoom. Select a landmark or use arrow keys to explore."></canvas>
-   <div class="map-heading"><span>CHART No. 01</span><h1>The Lantern Coast</h1><p>Here, even the dark has a little light.</p></div>
-   <div class="map-zoom" role="group" aria-label="Map zoom">
-    <button id="zoom-in" aria-label="Zoom in">+</button><button id="zoom-out" aria-label="Zoom out">−</button><button id="fit" aria-label="Fit whole world" title="Fit whole world">⌗</button>
-   </div>
-   <div class="compass" aria-hidden="true"><span>N</span><pre>  |  
---+--
-  |  </pre><span>280 × 116</span></div>
-   <div id="map-hint">Drag to wander · Scroll to look closer</div>
-   <div id="toast" role="status" aria-live="polite"></div>
-   <div id="loading">Unfolding the atlas<span>Gathering shores, roads, and stories…</span></div>
-  </div>
-  <div class="map-bottom"><span id="coordinates">044 E / 068 N</span><span id="terrain">ATLAS · 14 PLACES TO FIND</span><button id="labels" aria-pressed="true">Labels on</button></div>
-  <div id="workshop" hidden>
-   <div class="workshop-top"><strong>MAKE YOUR MARK</strong><label>Brush <select id="brush-size" aria-label="Brush size"><option value="1">1 tile</option><option value="3">3 tiles</option><option value="5">5 tiles</option></select></label></div>
-   <div id="brushes" role="group" aria-label="Terrain brushes"></div>
-   <div class="workshop-actions"><button id="undo" disabled>↶ Undo</button><button id="redo" disabled>↷ Redo</button><button id="export-map">Export .txt</button><button id="import-map">Import .txt</button><button id="reset-map">Restore map</button></div>
-   <p>Paint directly on the map. Hold Space to pan. Edits save on this device. On touch, use two fingers to pan or pinch.</p>
-   <input id="map-file" type="file" accept=".txt,text/plain" hidden>
-  </div>
-  <div id="travel-controls" hidden>
-   <div class="dpad" role="group" aria-label="Movement controls"><button data-dir="up" aria-label="Move north">↑</button><button data-dir="left" aria-label="Move west">←</button><button data-dir="down" aria-label="Move south">↓</button><button data-dir="right" aria-label="Move east">→</button></div>
-   <div class="travel-actions"><button id="interact">Interact <kbd>E</kbd></button><button id="center">Find me <kbd>C</kbd></button><button id="stop-route" hidden>Stop walking</button></div>
-   <small>WASD / arrows to move · Click the map to travel</small>
-  </div>
- </section>
- <aside class="sidebar">
-  <section class="place-card">
-   <div class="eyebrow"><span id="place-kind">YOUR NEXT CHAPTER</span><span id="place-number">01 / 14</span></div>
-   <pre id="portrait" aria-hidden="true"></pre>
-   <span id="place-region">THE VERDANT REACH</span>
-   <h2 id="place-name">Brackenport</h2>
-   <p id="place-tag" class="place-tag">A light in every window</p>
-   <p id="place-description">Tarred rope, wet cobblestones, and bread cooling on a windowsill. Every expedition begins at the harbor.</p>
-   <label class="place-picker">Find a place<select id="place-picker" aria-label="Choose a landmark"></select></label>
-   <button id="travel" class="primary">Begin expedition <span>↗</span></button>
-   <button id="visit" class="secondary" hidden>Talk to the keeper</button>
-  </section>
-  <section class="quest-card">
-   <div class="eyebrow"><span>THE LONG WAY HOME</span><span id="beacon-count">0 / 3</span></div>
-   <h3>Wake the old lights.</h3><p>Three quiet beacons. One forgotten sky.</p>
-   <div id="beacons"></div>
-   <p id="quest-note">Explore the coast. Find the keepers.</p>
-  </section>
-  <section class="journal-card"><div class="eyebrow"><span>FIELD NOTES</span><span id="discovery-count">0 / 14</span></div><div id="journal"><p>Your journal is waiting for its first story.</p></div></section>
- </aside>
+<main id="game" class="game" hidden>
+ <header class="masthead"><button id="title-button" class="wordmark" aria-label="Open game menu">FEVERWAKE<span>AN ASCII DREAM RPG</span></button><div class="chapter" id="chapter">I / THE SLEEPING SICKNESS</div><button id="sound" class="quiet" aria-label="Toggle sound">Sound off</button></header>
+ <section class="hud" aria-label="Traveler status"><div><span class="stat-label">VITALITY</span><strong id="hp-text">40 / 40</strong><div class="meter"><i id="hp-bar"></i></div></div><div><span class="stat-label">FOCUS</span><strong id="mp-text">12 / 12</strong><div class="meter focus"><i id="mp-bar"></i></div></div><div class="stat-simple"><span class="stat-label">DREAM LV</span><strong id="level">01</strong></div><div class="stat-simple"><span class="stat-label">COINS</span><strong id="gold">38</strong></div></section>
+ <div class="scene-bar"><div><span id="realm" class="eyebrow">WAKING WORLD</span><h1 id="location">The Lantern Coast</h1></div><div id="scene-tools"><button id="atlas" class="quiet">Atlas</button><button id="journal" class="quiet">Journal</button></div></div>
+ <section class="viewport" aria-label="Game scene"><canvas id="map" aria-label="ASCII game map. Use the directional controls to move." role="img"></canvas><div id="map-caption" class="map-caption">@ you · H harbor · o town</div><div id="dread" class="dread" hidden></div><div id="zoom-controls" class="zoom-controls"><button id="zoom-out" aria-label="Zoom out">−</button><button id="zoom-in" aria-label="Zoom in">+</button></div></section>
+ <div class="message" id="message" role="status" aria-live="polite"></div>
+ <footer class="controls"><div class="dpad" aria-label="Movement"><button data-dir="up" aria-label="Move north">↑</button><button data-dir="left" aria-label="Move west">←</button><button data-dir="down" aria-label="Move south">↓</button><button data-dir="right" aria-label="Move east">→</button></div><div class="actions"><button id="interact" class="primary">Interact <kbd>E</kbd></button><button id="bag">Inventory <kbd>I</kbd></button><button id="menu" class="quiet">Menu <kbd>Esc</kbd></button></div><div class="keyboard-hint">WASD / arrows to walk<br>Tap a destination to travel</div></footer>
 </main>
-<footer><div class="legend"><span><b class="water">~</b> Sea</span><span><b class="forest">T</b> Woodland</span><span><b class="mountain">^</b> Peaks</span><span><b class="road">+</b> Road</span><span><b class="landmark">!</b> Beacon</span></div><div>EVERY CHARACTER, A LITTLE WORLD. <button id="help">How to play</button></div></footer>
-</div>
-<dialog id="conversation"><div class="dialog-eyebrow" id="dialog-eyebrow">A VOICE ON THE COAST</div><h2 id="dialog-title"></h2><p id="dialog-text"></p><div class="dialog-footer"><span id="dialog-page"></span><button id="dialog-next" class="primary">Continue ↗</button></div></dialog>
-<dialog id="help-dialog"><div class="dialog-eyebrow">A NOTE FROM THE CARTOGRAPHER</div><h2>Take the long way.</h2><p><b>Atlas:</b> drag to pan, scroll or pinch to zoom. Select a named place to learn its story.</p><p><b>Explore:</b> use WASD, arrow keys, or touch buttons. Click any reachable tile to walk or sail there. Your skiff unfolds automatically on water. E or Enter interacts with nearby landmarks.</p><p><b>Your task:</b> light the beacons at Mosswatch, Frostspire, and the Sunken Bell. Return to the Observatory to finish the journey.</p><p><b>Workshop:</b> paint terrain, undo strokes, and export your map as plain text. Hold Space to pan, or use two fingers on touch. Imported maps use the same 280 × 116 grid; landmarks stay in place. Your journey and edits save on this device.</p><p>Music is optional. C centers the traveler. Escape stops a route or closes a conversation.</p><form method="dialog"><button class="primary">The world is waiting ↗</button></form><button id="new-journey" class="secondary">Start a new journey</button></dialog>
-<dialog id="reset-dialog"><div class="dialog-eyebrow">RESTORE THE COAST</div><h2>Put the shores back?</h2><p>This removes your map edits on this device. Export a copy first if you want to keep them. Your expedition progress stays.</p><div class="dialog-footer"><button id="cancel-reset">Keep my edits</button><button id="confirm-reset" class="primary">Restore original</button></div></dialog>
-<dialog id="journey-dialog"><div class="dialog-eyebrow">A FRESH PAGE</div><h2>Begin again?</h2><p>This resets your discoveries and beacon progress on this device. Your map edits stay.</p><div class="dialog-footer"><button id="cancel-journey">Keep exploring</button><button id="confirm-journey" class="primary">Start again</button></div></dialog>
-<script type="module" src="js/main.js"></script>
-</body>
-</html>
+<section id="intro" class="intro" aria-label="Feverwake title screen"><canvas id="intro-art" aria-hidden="true"></canvas><div class="intro-content"><div class="intro-kicker">A WORLD ON THE OTHER SIDE OF SLEEP</div><h1>FEVERWAKE</h1><div class="intro-rule"><span>+ + +</span></div><p id="intro-line">At first, it was only a bad dream.</p><div class="intro-actions"><button id="continue" class="primary" hidden>Continue dream</button><button id="begin" class="primary">Begin</button></div><span id="loading" class="intro-footer">Preparing the world…</span></div><div class="intro-bottom">A CHARACTER AT A TIME <span>HEADPHONES OPTIONAL</span></div></section>
+<div id="overlay" class="overlay" hidden><section id="dialog" class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-title"><header><span id="dialog-tag" class="eyebrow"></span><button id="dialog-close" class="quiet" aria-label="Close dialog">×</button></header><h2 id="dialog-title"></h2><div id="dialog-content"></div><div id="dialog-actions" class="dialog-actions"></div></section></div>
+<script type="module" src="./js/main.js"></script>
+</body></html>
