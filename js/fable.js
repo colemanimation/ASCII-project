@@ -1,5 +1,5 @@
-import {FABLE_ART} from './fable-art.js?v=somnia-1';
-import {DialoguePlayer} from './dialogue.js?v=somnia-1';
+import {FABLE_ART} from './fable-art.js?v=somnia-2';
+import {DialoguePlayer} from './dialogue.js?v=somnia-2';
 
 // This is the order's creation tale, not an omniscient statement of history.
 export const FABLE=[

@@ -1,4 +1,4 @@
-import {figureKind,figureGlyphs,figureHit,isFigure} from './figures.js?v=somnia-1';
+import {figureKind,figureGlyphs,figureHit,isFigure} from './figures.js?v=somnia-2';
 const COLORS={'.':'#4e504a',',':'#62675b',"'":'#899897',':':'#777565','~':'#7b9da7','=':'#bfb7a0','+':'#dedacd',S:'#d4cc94',I:'#c9c3a0',Q:'#b9b5d4',M:'#fff',N:'#cfcfc4','>':'#ddd','$':'#dfcf9d',h:'#a9bbb3',B:'#e7a7a3','!':'#e0d9fc','%':'#b98585',k:'#dfcf9d',L:'#b7c6bf','?':'#bbb'};
 export class SceneRenderer{
  constructor(canvas){this.canvas=canvas;this.ctx=canvas.getContext('2d');this.layout=null;this.overview=false;this.route=[];}

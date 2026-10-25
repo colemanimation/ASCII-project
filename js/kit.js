@@ -1,7 +1,7 @@
-import {TOWN_BLUEPRINTS,buildTown} from './towns.js?v=somnia-1';
-import {STAMPS,textMap} from './tilekit.js?v=somnia-1';
-import {approachRoute,localRoute} from './rpg.js?v=somnia-1';
-import {terminalFrames} from './terminal.js?v=somnia-1';
+import {TOWN_BLUEPRINTS,buildTown} from './towns.js?v=somnia-2';
+import {STAMPS,textMap} from './tilekit.js?v=somnia-2';
+import {approachRoute,localRoute} from './rpg.js?v=somnia-2';
+import {terminalFrames} from './terminal.js?v=somnia-2';
 const $=id=>document.getElementById(id);let map,blueprint,collision=false;
 terminalFrames();
 for(const [id,b] of Object.entries(TOWN_BLUEPRINTS)){const o=document.createElement('option');o.value=id;o.textContent=b.name;$('village').append(o);}

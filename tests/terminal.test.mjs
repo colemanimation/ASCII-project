@@ -6,7 +6,7 @@ const r=await import(new URL(root+'js/rpg.js',import.meta.url));
 const {textMap,STAMPS}=await import(new URL(root+'js/tilekit.js',import.meta.url));
 const {newGame,makeTown,makeDream,TOWN_IDS,localWalkable,localRoute,approachRoute,tickTown,operateDream,hydrate,advanceStalker}=r;
 test('six different towns compile as ASCII and every resident route is traversable',()=>{
- const layouts=new Set;for(const id of TOWN_IDS){const m=makeTown(id);assert.match(textMap(m),/^[\x20-\x7e\n]+$/);layouts.add(textMap(m));for(const a of m.actors){for(const p of a.route)assert.ok(localRoute(m,a,p),id+': '+a.name);assert.ok(approachRoute(m,m.spawn,a));}assert.ok(m.objects.some(o=>o.type==='shop'));assert.ok(m.objects.some(o=>o.type==='inn'));assert.ok(m.objects.some(o=>o.type==='clinic'));}assert.equal(layouts.size,6);
+ const layouts=new Set;for(const id of TOWN_IDS){const m=makeTown(id);assert.match(textMap(m),/^[\x20-\x7e\n]+$/);layouts.add(textMap(m));for(const o of m.objects)assert.ok(approachRoute(m,m.spawn,o),id+': '+o.label);for(const a of m.actors){for(const p of a.route)assert.ok(localRoute(m,a,p),id+': '+a.name);assert.ok(approachRoute(m,m.spawn,a));}assert.ok(m.objects.some(o=>o.type==='shop'));assert.ok(m.objects.some(o=>o.type==='inn'));assert.ok(m.objects.some(o=>o.type==='clinic'));}assert.equal(layouts.size,6);
  for(const stamp of Object.values(STAMPS))assert.match(stamp.art.join('\n'),/^[\x20-\x7e\n]+$/);
 });
 test('residents move, avoid scenery and each other, and stop for a conversation; services stay fixed',()=>{

@@ -1,6 +1,8 @@
+import {HARBOR_STAMPS} from './building-art.js?v=somnia-2';
 // Printable-ASCII construction kit. Art and collision are separate layers.
 // Spaces in a stamp are transparent; every other cell is solid unless specified.
 export const STAMPS={
+ ...HARBOR_STAMPS,
  pine:{art:['  ^  ',' /A\\ ','/AAA\\','  |  ']},
  tree:{art:[' .oo. ','(oooo)',' `||` ','  ||  ']},
  cottage:{art:['    /\\    ',' __/  \\__ ','/________\\','| []  [] |','|___++___|'],doors:[[4,4],[5,4]]},

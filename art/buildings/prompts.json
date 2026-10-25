@@ -1,0 +1,9 @@
+{
+  "method": "Built-in image generation followed by font-calibrated ASCII conversion",
+  "scenes": [
+    {
+      "id": "bracken-buildings",
+      "prompt": "Use case: stylized-concept. Asset type: sprite mockup sheet for subsequent real ASCII conversion, not a game screenshot. A 2 by 2 sprite sheet on pure BLACK background, four isolated medieval fishing-village BUILDINGS, each centered in its own equal quadrant with large black gutters, no tile borders, no text or captions. Top left: broad timber harbor inn, steep crooked gable roof, chunky chimney on left, two bright windows and a wide centered black door. Top right: supply shop with a big striped awning across the front and a centered black doorway. Bottom left: small fisher cottage, simple steep thatched roof, one window each side of a centered black doorway, offset chimney. Bottom right: sleepy infirmary/ward with tall roof and central bell turret, symmetric two big bright windows and centered black doorway. Consistent frontal three-quarter overhead orthographic old RPG view, front wall visible, no isometric rotation, building bases horizontal. Pure white, black and ONE medium grey only. Strong WHITE SILHOUETTES and oversized black cuts, large simple solid roof planes and thick beams. Extremely low resolution pixel sprite design, each building must remain readable at only 20 columns by 10 rows of ASCII characters. No roof tiles, no brick lines, no tiny windows, no intricate timber lattice, no plants, no people, no ground or shadows, no props, no perspective background, no smooth gradient, no outline-only wireframes. Four distinct clear building silhouettes, substantial broad masses, chunky pixel edges."
+    }
+  ]
+}

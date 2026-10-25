@@ -1,6 +1,6 @@
-import {facingFrom,FACINGS} from './figures.js?v=somnia-1';
-export {makeTown} from './towns.js?v=somnia-1';
-export {makeDream,syncDreamMap,operateDream,roomAt} from './dungeons.js?v=somnia-1';
+import {facingFrom,FACINGS} from './figures.js?v=somnia-2';
+export {makeTown} from './towns.js?v=somnia-2';
+export {makeDream,syncDreamMap,operateDream,roomAt} from './dungeons.js?v=somnia-2';
 // Somnia: deterministic game rules. The UI supplies randomness for encounters.
 export const ITEMS={
  potion:{name:'Red cordial',kind:'use',price:12,heal:26,description:'Restores 26 HP.'},

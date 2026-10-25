@@ -14,8 +14,11 @@ frames = {}
 plates = []
 for path in sorted(ART.glob('*-source.png')):
     key = path.stem.removesuffix('-source')
+    silhouette = key in ('02-ruin', '04-keepers')
     lines = convert(read_image(path), columns=112, cell_aspect=.6,
-                    gamma=.83, black=.045, ramp=' .:-=+coOX#@')
+                    gamma=1 if silhouette else .83,
+                    black=.16 if silhouette else .045,
+                    ramp=' .:+#@' if silhouette else ' .:-=+coOX#@')
     frames[key] = lines
     (ART/(key+'.txt')).write_text('\n'.join(lines)+'\n', encoding='ascii')
     plate = render(lines, size=10, padding=12)

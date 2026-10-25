@@ -1,0 +1,2 @@
+# Fixed-width ASCII artwork intentionally retains padding and blank final rows.
+art/**/*.txt -whitespace
